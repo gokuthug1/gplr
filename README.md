@@ -39,7 +39,6 @@ Here is a complete, working example. You can copy this code into an `index.html`
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GokuPlr Example</title>
     <style>
-        /* Basic styling for the page layout */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
@@ -66,15 +65,15 @@ Here is a complete, working example. You can copy this code into an `index.html`
     <div class="video-wrapper">
         <video
           class="cvp"
-          src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4"
-          poster="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217"
+          src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4](http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          poster="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217](https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
           <!-- 
             The `crossorigin="anonymous"` attribute is required on the <video> tag 
             to load text tracks (captions) and generate thumbnail previews from a different domain.
           -->
-          <track kind="captions" srclang="en" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-HD.en.vtt" label="English" default />
+          <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/demuxed/big-buck-captions/refs/heads/main/big-buck-bunny.srt" label="English" default />
         </video>
     </div>
 
