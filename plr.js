@@ -1,15 +1,14 @@
 /**
- * GokuPlr v1.7 (Updated)
+ * GokuPlr v1.7.1 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
  *
- * Change in v1.7:
- * - Added a volume booster feature (up to 200%) using the Web Audio API.
+ * Change in v1.7.1:
+ * - Fixed a critical bug where the settings menu navigation (for Captions, Speed, etc.) was broken by the new volume booster button.
+ * - Refactored menu event handling to be more robust using event delegation, preventing future conflicts.
+ * - Added a static AudioContext to be shared across multiple player instances, which is best practice.
  * - Volume booster can be toggled with a new lightning bolt icon, a settings menu option, or the Ctrl+Z shortcut.
  * - Refined the settings menu UI for a more modern and compact appearance.
- * - Added a static AudioContext to be shared across multiple player instances, which is best practice.
- * - Encapsulated all new audio logic cleanly within the player class.
- * - Minor bug fix: Player could fail to initialize if video src was not immediately available.
  */
 
 (function() {
@@ -162,7 +161,6 @@
                             <div class="time-display"><span class="current-time">00:00</span> / <span class="total-time">00:00</span></div>
                         </div>
                         <div class="controls-right">
-                            <!-- NEW: Volume Booster Button -->
                             <button class="control-button volume-booster-btn" aria-label="Toggle Volume Booster (Ctrl+Z)">
                                 <svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg>
                             </button>
@@ -173,7 +171,6 @@
                                 <div class="menu-content">
                                     <div class="menu-panels-wrapper">
                                         <div class="menu-panel main-panel">
-                                            <!-- NEW: Volume Booster Menu Item -->
                                             <button class="menu-item volume-booster-toggle"><span>Volume Booster</span><span class="menu-item-value booster-status">Off</span></button>
                                             <button class="menu-item" data-target-panel="speed"><span>Playback Speed</span><span class="menu-item-value speed-display">1.0×</span></button>
                                             <button class="menu-item captions-menu-btn" data-target-panel="captions"><span>Captions</span><span class="menu-item-value">></span></button>
@@ -241,14 +238,12 @@
             this.settingsBtn = this.container.querySelector('.settings-btn');
             this.settingsMenu = this.container.querySelector('.settings-menu .menu-content');
             this.menuPanelsWrapper = this.container.querySelector('.menu-panels-wrapper');
-            this.menuItems = this.container.querySelectorAll('.menu-item, .menu-back-btn');
             this.speedSlider = this.container.querySelector('.speed-slider');
             this.speedDisplay = this.container.querySelector('.speed-display');
             this.speedPanelDisplay = this.container.querySelector('.speed-panel-display');
             this.captionsMenuBtn = this.container.querySelector('.captions-menu-btn');
             this.captionSettingInputs = this.container.querySelectorAll('.caption-setting-input');
             this.volumeBoosterBtn = this.container.querySelector('.volume-booster-btn');
-            this.volumeBoosterToggle = this.container.querySelector('.volume-booster-toggle');
             this.boosterStatus = this.container.querySelector('.booster-status');
         }
 
@@ -277,10 +272,9 @@
             this.captionsBtn.style.display = 'none';
             this.captionsMenuBtn.style.display = 'none';
             if (!document.pictureInPictureEnabled) { this.pipBtn.style.display = 'none'; }
-            // Hide booster button if Web Audio API is not supported (checked later)
             if (!window.AudioContext && !window.webkitAudioContext) {
                  this.volumeBoosterBtn.style.display = 'none';
-                 this.volumeBoosterToggle.style.display = 'none';
+                 this.container.querySelector('.volume-booster-toggle').style.display = 'none';
             }
 
             if (this.video.currentSrc) this.setupVideoSource(this.video.currentSrc);
@@ -310,7 +304,6 @@
             this.video.addEventListener('leavepictureinpicture', () => this.pipBtn.classList.remove('active'));
             this.thumbnailVideo.addEventListener('seeked', () => { this.thumbnailCtx.drawImage(this.thumbnailVideo, 0, 0, this.thumbnailCanvas.width, this.thumbnailCanvas.height); });
             
-            // If the src is set dynamically, we need to catch it
             new MutationObserver((mutations) => {
                 mutations.forEach(mutation => {
                     if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
@@ -328,7 +321,19 @@
 
             this.speedSlider.addEventListener('input', () => { const speedValue = this.PLAYBACK_SPEEDS[this.speedSlider.value]; this.setSpeed(speedValue); });
             this.volumeBoosterBtn.addEventListener('click', this.toggleVolumeBooster.bind(this));
-            this.volumeBoosterToggle.addEventListener('click', this.toggleVolumeBooster.bind(this));
+            
+            // *** FIXED: Unified menu event listener using event delegation ***
+            this.settingsMenu.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const targetPanel = button.dataset.targetPanel;
+                if (targetPanel) {
+                    this.navigateMenu(targetPanel);
+                } else if (button.classList.contains('volume-booster-toggle')) {
+                    this.toggleVolumeBooster();
+                }
+            });
 
             this.progressBarContainer.addEventListener('mousedown', this.handleScrubbingStart.bind(this));
             this.progressBarContainer.addEventListener('mousemove', this.updateSeekTooltip.bind(this));
@@ -344,12 +349,6 @@
             this.container.addEventListener('mousemove', this.showControls.bind(this));
             this.container.addEventListener('mouseleave', this.hideControlsOnLeave.bind(this));
             
-            this.menuItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    const targetPanel = e.currentTarget.dataset.targetPanel;
-                    if (targetPanel) this.navigateMenu(targetPanel);
-                });
-            });
             this.captionSettingInputs.forEach(input => {
                 input.addEventListener('input', this.handleCaptionInputChange.bind(this));
             });
@@ -420,36 +419,24 @@
         hideControls() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) { this.showControls(true); return; } this.controlsTimeout = setTimeout(() => { this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); this.container.classList.add('no-cursor'); }, 2600); }
         hideControlsOnLeave() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return; this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); }
 
-        // --- NEW: Volume Booster Methods ---
+        // --- Volume Booster Methods ---
         async initializeAudioBooster() {
-            if (this.mediaSource) return true; // Already initialized
-        
+            if (this.mediaSource) return true;
             try {
-                if (!window.AudioContext && !window.webkitAudioContext) {
-                    throw new Error("Web Audio API not supported.");
-                }
-        
+                if (!window.AudioContext && !window.webkitAudioContext) throw new Error("Web Audio API not supported.");
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!CustomVideoPlayer.audioContext) {
-                    CustomVideoPlayer.audioContext = new AudioContext();
-                }
-        
-                if (CustomVideoPlayer.audioContext.state === 'suspended') {
-                    await CustomVideoPlayer.audioContext.resume();
-                }
-        
+                if (!CustomVideoPlayer.audioContext) CustomVideoPlayer.audioContext = new AudioContext();
+                if (CustomVideoPlayer.audioContext.state === 'suspended') await CustomVideoPlayer.audioContext.resume();
                 this.mediaSource = CustomVideoPlayer.audioContext.createMediaElementSource(this.video);
                 this.boosterGainNode = CustomVideoPlayer.audioContext.createGain();
-                this.boosterGainNode.gain.value = 1; // Start at normal volume
-        
+                this.boosterGainNode.gain.value = 1;
                 this.mediaSource.connect(this.boosterGainNode);
                 this.boosterGainNode.connect(CustomVideoPlayer.audioContext.destination);
                 return true;
-        
             } catch (e) {
                 console.error("Failed to initialize volume booster:", e.message);
                 this.volumeBoosterBtn.style.display = 'none';
-                this.volumeBoosterToggle.style.display = 'none';
+                this.container.querySelector('.volume-booster-toggle').style.display = 'none';
                 return false;
             }
         }
@@ -457,14 +444,10 @@
         async toggleVolumeBooster() {
             const isInitialized = await this.initializeAudioBooster();
             if (!isInitialized) return;
-        
             this.isBoosterActive = !this.isBoosterActive;
             this.boosterGainNode.gain.value = this.isBoosterActive ? this.BOOSTER_LEVEL : 1;
-            
-            // Update UI
             this.volumeBoosterBtn.classList.toggle('active', this.isBoosterActive);
             this.boosterStatus.textContent = this.isBoosterActive ? 'On' : 'Off';
-            console.log(`Volume booster ${this.isBoosterActive ? 'enabled' : 'disabled'}.`);
         }
 
         // --- MENU AND SETTINGS METHODS ---
