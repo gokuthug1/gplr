@@ -35,7 +35,7 @@ Place the following `<script>` tag just before the closing `</body>` tag in your
 ```
 ## Step 2: Add the CSS Class
 
-To transform a standard video element, simply add the class `custom-video-player` to your `<video>` tag.
+To transform a standard video element, simply add the class `cvp` to your `<video>` tag.
 
 ---
 
