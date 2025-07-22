@@ -108,14 +108,14 @@ Here is a complete, working example. You can copy this code into an `index.html`
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.6/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7/plr.js" defer></script>
 
 </body>
 </html>" label="English" default />
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.6/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7/plr.js" defer></script>
 
 </body>
 </html>
