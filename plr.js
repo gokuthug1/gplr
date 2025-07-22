@@ -1,30 +1,18 @@
 /**
- * GokuPlr v1.5
+ * GokuPlr v1.6 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
  *
- * Change in v1.5:
- * - Removed circle from the large central play button for a cleaner, icon-focused look.
- * - Controls and cursor now auto-hide after 3 seconds of inactivity, even when the video is paused.
- * - Redesigned settings UI for Playback Speed and Caption Settings for better usability and layout.
- *
- * Change in v1.4:
- * - Added a new settings icon and a comprehensive, multi-panel settings menu.
- * - Implemented a "Caption Settings" panel to customize font, size, color, background, and theme accent.
- * - Settings are now saved to localStorage to persist across sessions.
- * - When controls are visible, captions are now positioned above them to prevent overlap.
- * - Refactored menu logic to be more scalable.
- *
- * Change in v1.3: Renamed trigger class to "cvp".
- *
- * Fix in v1.1: Hides default browser controls to prevent overlapping.
- * Fix in v1.2:
- * - Fixed major player creation bug that could corrupt the video element.
- * - Scoped keyboard shortcuts to only work when the player is focused.
- * - Fixed progress bar hover preview to not alter the main time display.
- * - Corrected various HTML/CSS/JS inconsistencies for more stable behavior.
- * - Improved time formatting and code readability.
+ * Change in v1.6:
+ * - Player now starts at 100% volume by default.
+ * - Controls and cursor now auto-hide after 2.6 seconds of inactivity.
+ * - Fixed a bug where the caption settings menu item would not appear reliably.
+ * - Player container now dynamically adjusts to the video's aspect ratio, reducing black bars.
+ * - Made the time display in the seek tooltip unselectable.
+ * - Improved robustness of the caption settings panel to ensure color and opacity sliders work together seamlessly.
+ * - Minor UI adjustments for better layout and feel.
  */
+
 (function() {
     // This wrapper prevents our code from interfering with other scripts on the page.
 
@@ -61,7 +49,7 @@
                 :root { --primary-color: #00a8ff; --menu-highlight-color: #6A5ACD; --text-color: #ffffff; --controls-bg: rgba(20, 20, 20, 0.85); --menu-bg: rgba(30, 30, 30, 0.95); --progress-bar-bg: rgba(255, 255, 255, 0.3); --tooltip-bg: rgba(0, 0, 0, 0.85); --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --border-radius: 8px; --transition-speed: 0.2s; }
                 .video-player-container { --primary-color: #00a8ff; --caption-font-size: 22px; --caption-font-color: #ffffff; --caption-bg-color: rgba(0, 0, 0, 0.75); --caption-font-family: 'Arial', sans-serif; }
                 .video-player-container:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-                .time-display { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
+                .time-display, .tooltip-time { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
                 .video-player-container { position: relative; width: 100%; background-color: #000; border-radius: var(--border-radius); overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; aspect-ratio: 16 / 9; }
                 .video-player-container.no-cursor { cursor: none; }
                 .video-player-container.fullscreen { max-width: none; width: 100%; height: 100%; border-radius: 0; aspect-ratio: auto; }
@@ -120,7 +108,7 @@
 
                 /* --- NEW: Multi-Panel Settings Menu --- */
                 .settings-menu { position: relative; }
-                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
+                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 290px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s ease-in-out; }
                 .menu-panel { width: 100%; flex-shrink: 0; padding: 8px; }
@@ -186,7 +174,7 @@
                                     <div class="menu-panels-wrapper">
                                         <div class="menu-panel main-panel">
                                             <button class="menu-item" data-target-panel="speed"><span>Playback Speed</span><span class="menu-item-value speed-display">1.0×</span></button>
-                                            <button class="menu-item captions-menu-btn" data-target-panel="captions" style="display: none;"><span>Captions</span><span class="menu-item-value">></span></button>
+                                            <button class="menu-item captions-menu-btn" data-target-panel="captions"><span>Captions</span><span class="menu-item-value">></span></button>
                                         </div>
                                         <div class="menu-panel speed-panel">
                                             <button class="menu-back-btn" data-target-panel="main">< Playback Speed</button>
@@ -265,6 +253,7 @@
             this.isScrubbing = false;
             this.isDraggingVolume = false;
             this.wasPaused = true;
+            this.video.volume = 1;
             this.controlsTimeout = null;
             this.animationFrameId = null;
             this.handleDocumentMouseUp = this.handleDocumentMouseUp.bind(this);
@@ -274,6 +263,7 @@
             this.updateVolumeUI();
             this.setSpeed(1);
             this.captionsBtn.style.display = 'none';
+            this.captionsMenuBtn.style.display = 'none';
             if (!document.pictureInPictureEnabled) { this.pipBtn.style.display = 'none'; }
 
             if (this.video.currentSrc) {
@@ -292,7 +282,12 @@
             this.video.addEventListener('play', this.handlePlay.bind(this));
             this.video.addEventListener('pause', this.handlePause.bind(this));
             this.video.addEventListener('ended', () => this.stopProgressLoop());
-            this.video.addEventListener('timeupdate', () => { if (!this.isScrubbing) this.updateTimeDisplay(); });
+            this.video.addEventListener('timeupdate', () => { if (!this.isScrubbing) this.updateTimeDisplay();
+            // Improvement: Adapt player aspect ratio to the video's actual dimensions
+            if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
+                this.container.style.setProperty('aspect-ratio', this.video.videoWidth / this.video.videoHeight);
+            }
+ });
             this.video.addEventListener('volumechange', this.updateVolumeUI.bind(this));
             this.video.addEventListener('enterpictureinpicture', () => this.pipBtn.classList.add('active'));
             this.video.addEventListener('leavepictureinpicture', () => this.pipBtn.classList.remove('active'));
@@ -367,9 +362,14 @@
         
         handleLoadedMetadata() {
             this.updateTimeDisplay();
+            // Improvement: Adapt player aspect ratio to the video's actual dimensions
+            if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
+                this.container.style.setProperty('aspect-ratio', this.video.videoWidth / this.video.videoHeight);
+            }
+
             this.updateProgressBar();
             this.thumbnailVideo.src = this.video.src;
-            if (this.video.textTracks.length > 0 && this.video.textTracks[0].cues) {
+            if (this.video.textTracks.length > 0) {
                 this.captionsBtn.style.display = 'flex';
                 this.captionsMenuBtn.style.display = 'flex';
                 this.video.textTracks[0].mode = 'hidden';
@@ -409,7 +409,7 @@
                 this.videoControls.classList.remove('visible');
                 this.container.classList.remove('controls-visible');
                 this.container.classList.add('no-cursor');
-            }, 3000);
+            }, 2600);
         }
 
         hideControlsOnLeave() {
@@ -447,19 +447,27 @@
         handleCaptionInputChange(e) {
             const input = e.currentTarget;
             const setting = input.dataset.setting;
-            let value = input.value;
+            let value;
 
-            if (input.dataset.unit) {
-                value += input.dataset.unit;
-            } else if (input.dataset.isOpacity) {
-                // Handle opacity slider for the background color
-                const colorInput = this.container.querySelector(`[data-opacity-input="${input.id}"]`);
-                const hex = colorInput.value;
-                const opacity = parseInt(value, 10) / 100;
-                const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
-                value = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            // This logic correctly links color pickers with their associated opacity sliders.
+            if (input.id === 'caption-bg-color') {
+                // The main background color picker changed.
+                const opacitySlider = this.container.querySelector('#caption-bg-opacity');
+                const opacity = parseInt(opacitySlider.value, 10) / 100;
+                value = this.hexToRgba(input.value, opacity);
+            } else if (input.id === 'caption-bg-opacity') {
+                // The background opacity slider changed.
+                const colorInput = this.container.querySelector('#caption-bg-color');
+                const opacity = parseInt(input.value, 10) / 100;
+                value = this.hexToRgba(colorInput.value, opacity);
+            } else {
+                // For all other inputs (accent color, font size, font family).
+                value = input.value;
+                if (input.dataset.unit) {
+                    value += input.dataset.unit;
+                }
             }
-
+            
             this.settings[setting] = value;
             this.applySettings();
             this.saveSettings();
