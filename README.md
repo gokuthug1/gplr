@@ -68,7 +68,7 @@ Here is a complete, working example. You can copy this code into an `index.html`
           poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
-          <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/demuxed/big-buck-captions/refs/heads/main/big-buck-bunny.srt" label="English" default />
+          <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/demuxed/big-buck-captions/refs/heads/main/big-buck-bunny.srt](https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
         </video>
     </div>
 
