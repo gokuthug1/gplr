@@ -31,7 +31,7 @@ Place the following `<script>` tag just before the closing `</body>` tag in your
 
 ```html
 <!-- It's best to link to a specific version for stability -->
-<script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.3/plr.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.4/plr.js" defer></script>
 ```
 ## Step 2: Add the CSS Class
 
