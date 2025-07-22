@@ -68,7 +68,50 @@ Here is a complete, working example. You can copy this code into an `index.html`
           poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
-          <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/demuxed/big-buck-captions/refs/heads/main/big-buck-bunny.srt](https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
+          <track kind="captions" srclang="en" src="<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GokuPlr Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .video-wrapper {
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-wrapper">
+        <video
+          class="cvp"
+          src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+          crossorigin="anonymous"
+        >
+          <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
+        </video>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.6/plr.js" defer></script>
+
+</body>
+</html>" label="English" default />
         </video>
     </div>
 
