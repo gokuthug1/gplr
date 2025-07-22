@@ -53,10 +53,9 @@ Here is a complete, working example. You can copy this code into an `index.html`
         .video-wrapper {
             max-width: 900px;
             width: 100%;
-            /* This shadow matches the player's default style */
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-radius: 8px; /* Match player's default border-radius */
-            overflow: hidden; /* Ensures poster image respects the border-radius */
+            border-radius: 8px;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -65,20 +64,14 @@ Here is a complete, working example. You can copy this code into an `index.html`
     <div class="video-wrapper">
         <video
           class="cvp"
-          src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4](http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-          poster="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217](https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+          src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
-          <!-- 
-            The `crossorigin="anonymous"` attribute is required on the <video> tag 
-            to load text tracks (captions) and generate thumbnail previews from a different domain.
-          -->
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/demuxed/big-buck-captions/refs/heads/main/big-buck-bunny.srt" label="English" default />
         </video>
     </div>
 
-    <!-- GokuPlr Script: Place right before the closing </body> tag -->
-    <!-- It's best to link to a specific version for stability -->
     <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.6/plr.js" defer></script>
 
 </body>
