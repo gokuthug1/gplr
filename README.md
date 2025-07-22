@@ -8,14 +8,15 @@ A lightweight, modern, and skinnable HTML5 video player that can be added to any
 
 ## Features
 
-- **Modern, Auto-Hiding UI:** Clean controls that disappear during playback for an unobstructed view, even while paused.
+- **Modern, Auto-Hiding UI:** Clean controls that disappear during playback for an unobstructed view.
+- **Volume Booster:** Use the Web Audio API to boost volume up to 200%, accessible via an icon, the settings menu, or a keyboard shortcut.
 - **Advanced Settings Menu:**
-    - Live theme color customization.
     - Playback speed control (0.5x to 2x).
     - Comprehensive caption styling: font family, size, color, background color, and background opacity.
+    - Customize the player's primary accent color.
     - Settings are saved locally to persist across sessions.
 - **Thumbnail Previews:** See a video preview when hovering over the progress bar.
-- **Full Keyboard Control:** Shortcuts for play/pause, volume, fullscreen, and seeking.
+- **Full Keyboard Control:** Comprehensive shortcuts for play/pause, volume, seeking, fullscreen, and more.
 - **Picture-in-Picture & Fullscreen:** Native browser support for both modes.
 - **Responsive & Lightweight:** Looks great on all screen sizes with no external dependencies.
 - **Simple Integration:** Add to your site with a single script tag and a CSS class.
@@ -68,54 +69,11 @@ Here is a complete, working example. You can copy this code into an `index.html`
           poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
-          <track kind="captions" srclang="en" src="<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr Example</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .video-wrapper {
-            max-width: 900px;
-            width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="video-wrapper">
-        <video
-          class="cvp"
-          src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-          poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
-          crossorigin="anonymous"
-        >
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7/plr.js" defer></script>
-
-</body>
-</html>" label="English" default />
-        </video>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7.1/plr.js" defer></script>
 
 </body>
 </html>
@@ -123,14 +81,15 @@ Here is a complete, working example. You can copy this code into an `index.html`
 
 ### Keyboard Shortcuts
 
-| **Key**           | **Action**                  |
-|-------------------|-----------------------------|
-| `Space` or `K`    | Toggle Play/Pause           |
-| `M`               | Toggle Mute/Unmute          |
-| `F`               | Toggle Fullscreen           |
-| `P`               | Toggle Picture-in-Picture   |
-| `→` (Right Arrow) | Seek Forward 5 seconds      |
-| `←` (Left Arrow)  | Seek Backward 5 seconds     |
+| **Key** | **Action** |
+| :--- | :--- |
+| `Space` or `K` | Toggle Play/Pause |
+| `M` | Toggle Mute/Unmute |
+| `F` | Toggle Fullscreen |
+| `P` | Toggle Picture-in-Picture |
+| `→` (Right Arrow) | Seek Forward 5 seconds |
+| `←` (Left Arrow) | Seek Backward 5 seconds |
+| `Ctrl` + `Z` | Toggle Volume Booster |
 
 ---
 
