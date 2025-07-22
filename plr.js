@@ -1,9 +1,9 @@
 /**
- * GokuPlr v1.7.1 (Updated)
+ * GokuPlr v1.7.2 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
  *
- * Change in v1.7.1:
+ * Change in v1.7.2:
  * - Fixed a critical bug where the settings menu navigation (for Captions, Speed, etc.) was broken by the new volume booster button.
  * - Refactored menu event handling to be more robust using event delegation, preventing future conflicts.
  * - Added a static AudioContext to be shared across multiple player instances, which is best practice.
@@ -292,6 +292,8 @@
 
         attachEventListeners() {
             this.video.addEventListener('loadedmetadata', this.handleLoadedMetadata.bind(this));
+            this.video.textTracks.addEventListener('addtrack', this.updateCaptionButtonVisibility.bind(this));
+            this.video.textTracks.addEventListener('removetrack', this.updateCaptionButtonVisibility.bind(this));
             this.video.addEventListener('play', this.handlePlay.bind(this));
             this.video.addEventListener('pause', this.handlePause.bind(this));
             this.video.addEventListener('ended', () => this.stopProgressLoop());
@@ -393,11 +395,7 @@
             }
             this.updateProgressBar();
             if (this.video.src && !this.thumbnailVideo.src) this.setupVideoSource(this.video.src);
-            if (this.video.textTracks.length > 0) {
-                this.captionsBtn.style.display = 'flex';
-                this.captionsMenuBtn.style.display = 'flex';
-                this.video.textTracks[0].mode = 'hidden';
-            }
+            this.updateCaptionButtonVisibility();
         }
 
         handlePlay() { this.updatePlayPauseIcon(); this.startProgressLoop(); this.hideControls(); }
@@ -412,7 +410,24 @@
         handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.closeAllMenus(); }
         handleKeydown(e) { const tagName = document.activeElement.tagName.toLowerCase(); if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return; const key = e.key.toLowerCase(); if (e.ctrlKey && key === 'z') { e.preventDefault(); this.toggleVolumeBooster(); return; } const actions = { " ": this.togglePlay.bind(this), "k": this.togglePlay.bind(this), "m": this.toggleMute.bind(this), "f": this.toggleFullscreen.bind(this), "p": this.togglePip.bind(this), "arrowleft": () => { this.video.currentTime -= 5; }, "arrowright": () => { this.video.currentTime += 5; } }; if (actions[key]) { e.preventDefault(); actions[key](); } }
 
-        startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
+        updateCaptionButtonVisibility() {
+            const hasTracks = this.video.textTracks && this.video.textTracks.length > 0;
+            const displayStyle = hasTracks ? 'flex' : 'none';
+
+            // Update visibility of both the main button and the settings menu item
+            this.captionsBtn.style.display = displayStyle;
+            this.captionsMenuBtn.style.display = displayStyle;
+
+            if (hasTracks) {
+                // By default, captions should be off. 'hidden' ensures the track is available but not visible.
+                this.video.textTracks[0].mode = 'hidden';
+                // Ensure the UI state is correct on load
+                this.captionsBtn.classList.remove('active');
+                this.container.classList.remove('captions-on');
+            }
+        }
+
+                startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
         stopProgressLoop() { cancelAnimationFrame(this.animationFrameId); }
         
         showControls(force = false) { clearTimeout(this.controlsTimeout); this.container.classList.remove('no-cursor'); this.videoControls.classList.add('visible'); this.container.classList.add('controls-visible'); if (!force) { this.hideControls(); } }
