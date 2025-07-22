@@ -408,8 +408,30 @@
         handleDocumentMouseMove(e) { if (this.isScrubbing) this.handleScrubbing(e); if (this.isDraggingVolume) this.handleVolumeDrag(e); }
         handleDocumentMouseUp(e) { if (this.isScrubbing) { this.isScrubbing = false; const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; this.video.currentTime = percent * this.video.duration; if (!this.wasPaused) this.video.play(); this.seekTooltip.style.display = 'none'; } if (this.isDraggingVolume) this.isDraggingVolume = false; }
         handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.closeAllMenus(); }
-        handleKeydown(e) { const tagName = document.activeElement.tagName.toLowerCase(); if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return; const key = e.key.toLowerCase(); if (e.ctrlKey && key === 'z') { e.preventDefault(); this.toggleVolumeBooster(); return; } const actions = { " ": this.togglePlay.bind(this), "k": this.togglePlay.bind(this), "m": this.toggleMute.bind(this), "f": this.toggleFullscreen.bind(this), "p": this.togglePip.bind(this), "arrowleft": () => { this.video.currentTime -= 5; }, "arrowright": () => { this.video.currentTime += 5; } }; if (actions[key]) { e.preventDefault(); actions[key](); } }
-
+handleKeydown(e) {const tagName = document.activeElement.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return;
+    const key = e.key.toLowerCase();
+    if (e.ctrlKey && key === 'z') {
+        e.preventDefault();
+        this.toggleVolumeBooster();
+        return;
+    }
+    const actions = {
+        " ": this.togglePlay.bind(this),
+        "k": this.togglePlay.bind(this),
+        "m": this.toggleMute.bind(this),
+        "f": this.toggleFullscreen.bind(this),
+        "p": this.togglePip.bind(this),
+        "arrowleft": () => { this.video.currentTime -= 5; },
+        "arrowright": () => { this.video.currentTime += 5; },
+        "j": () => { this.video.currentTime -= 10; },
+        "l": () => { this.video.currentTime += 10; }
+    };
+    if (actions[key]) {
+        e.preventDefault();
+        actions[key]();
+    }
+}
         updateCaptionButtonVisibility() {
             const hasTracks = this.video.textTracks && this.video.textTracks.length > 0;
             const displayStyle = hasTracks ? 'flex' : 'none';
