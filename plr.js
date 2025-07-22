@@ -1,7 +1,12 @@
 /**
- * GokuPlr v1.4
+ * GokuPlr v1.5
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
+ *
+ * Change in v1.5:
+ * - Removed circle from the large central play button for a cleaner, icon-focused look.
+ * - Controls and cursor now auto-hide after 3 seconds of inactivity, even when the video is paused.
+ * - Redesigned settings UI for Playback Speed and Caption Settings for better usability and layout.
  *
  * Change in v1.4:
  * - Added a new settings icon and a comprehensive, multi-panel settings menu.
@@ -69,7 +74,7 @@
                 /* --- END NEW --- */
 
                 .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); opacity: 0; transition: opacity var(--transition-speed) ease-in-out; z-index: 2; }
-                .video-player-container.paused .video-controls, .video-player-container .video-controls.visible { opacity: 1; }
+                .video-player-container .video-controls.visible { opacity: 1; }
                 .controls-bottom { display: flex; align-items: center; gap: 12px; }
                 .controls-left, .controls-right { display: flex; align-items: center; gap: 12px; }
                 .controls-right { margin-left: auto; }
@@ -105,14 +110,17 @@
                 .volume-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--text-color); position: absolute; top: 50%; transform: translateY(-50%); left: 100%; margin-left: -6px; opacity: 0; transition: opacity var(--transition-speed); pointer-events: none; }
                 .volume-container:hover .volume-thumb { opacity: 1; }
                 .time-display { color: var(--text-color); font-size: 14px; font-variant-numeric: tabular-nums; }
-                .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: rgba(0,0,0,0.5); border: 2px solid var(--text-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background 0.2s, opacity 0.2s; opacity: 1; z-index: 1; }
-                .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); background: rgba(0, 168, 255, 0.8); background-color: var(--primary-color); }
-                .big-play-button svg { width: 40px; height: 40px; fill: var(--text-color); padding-left: 5px; }
+                
+                /* --- MODIFIED: Big Play Button (Circle Removed) --- */
+                .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 1; padding: 0; }
+                .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); }
+                .big-play-button:hover svg { fill: var(--primary-color); }
+                .big-play-button svg { width: 80px; height: 80px; fill: var(--text-color); transition: fill var(--transition-speed); }
                 .video-player-container.playing .big-play-button { opacity: 0; pointer-events: none; }
 
                 /* --- NEW: Multi-Panel Settings Menu --- */
                 .settings-menu { position: relative; }
-                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 260px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
+                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s ease-in-out; }
                 .menu-panel { width: 100%; flex-shrink: 0; padding: 8px; }
@@ -122,17 +130,20 @@
                 .menu-item-value { color: #aaa; }
                 .menu-back-btn { background: none; border: none; color: #ddd; font-size: 15px; padding: 8px 12px; margin: -8px -8px 8px -8px; width: calc(100% + 16px); text-align: left; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
                 .menu-back-btn:hover { background: rgba(255, 255, 255, 0.1); }
-                .speed-slider-container { padding: 8px 5px; }
-                .caption-settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 15px; align-items: center; padding: 5px; font-size: 14px; color: #eee; }
-                .caption-settings-grid label { white-space: nowrap; }
-                .caption-settings-grid input[type="color"] { width: 32px; height: 32px; border: 1px solid #555; border-radius: 4px; padding: 2px; background: none; cursor: pointer; }
-                .caption-settings-grid select { width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 5px; font-size: 14px; }
-                .caption-settings-grid .slider-container { display: flex; align-items: center; gap: 8px; }
+
+                /* --- MODIFIED: Settings Panel UI --- */
+                .speed-slider-container { padding: 12px; display: flex; align-items: center; gap: 12px; }
+                .speed-slider-container .speed-panel-display { color: #ccc; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 45px; text-align: right; }
+                .caption-settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 12px 15px; align-items: center; padding: 8px 12px; font-size: 14px; color: #eee; }
+                .caption-settings-grid label { white-space: nowrap; justify-self: end; }
+                .caption-settings-grid input[type="color"] { width: 28px; height: 28px; border: 1px solid #555; border-radius: 4px; padding: 2px; background: none; cursor: pointer; justify-self: start; }
+                .caption-settings-grid select { width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 6px; font-size: 14px; }
+                .caption-settings-grid .slider-container { display: flex; align-items: center; gap: 8px; width: 100%; }
                 input[type=range].goku-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; background: var(--progress-bar-bg); border-radius: 5px; outline: none; cursor: pointer; }
                 input[type=range].goku-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; margin-top: -5px; transition: background var(--transition-speed); }
                 input[type=range].goku-slider:hover::-webkit-slider-thumb, input[type=range].goku-slider:focus::-webkit-slider-thumb { background: var(--primary-color); }
                 input[type=range].goku-slider::-moz-range-thumb { width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; border: none; transition: background var(--transition-speed); }
-                /* --- END NEW --- */
+                /* --- END MODIFIED --- */
 
                 .control-button:focus-visible, .settings-menu button:focus-visible, input[type=range]:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
                 @media (max-width: 600px) { .volume-container:hover .volume-slider { width: 50px; } .time-display { font-size: 12px; } .control-button svg { width: 20px; height: 20px; } .controls-bottom, .controls-left, .controls-right { gap: 6px; } }
@@ -166,7 +177,7 @@
                             <div class="time-display"><span class="current-time">00:00</span> / <span class="total-time">00:00</span></div>
                         </div>
                         <div class="controls-right">
-                             <!-- NEW SETTINGS MENU STRUCTURE -->
+                             <!-- MODIFIED SETTINGS MENU STRUCTURE -->
                             <div class="settings-menu">
                                 <button class="control-button settings-btn" aria-label="Settings">
                                     <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
@@ -179,7 +190,10 @@
                                         </div>
                                         <div class="menu-panel speed-panel">
                                             <button class="menu-back-btn" data-target-panel="main">< Playback Speed</button>
-                                            <div class="speed-slider-container"><input type="range" class="goku-slider speed-slider" min="0" max="5" value="2" step="1"></div>
+                                            <div class="speed-slider-container">
+                                                <input type="range" class="goku-slider speed-slider" min="0" max="5" value="2" step="1">
+                                                <span class="speed-panel-display">1.0×</span>
+                                            </div>
                                         </div>
                                         <div class="menu-panel captions-panel">
                                             <button class="menu-back-btn" data-target-panel="main">< Caption Settings</button>
@@ -233,13 +247,14 @@
             this.thumbnailCtx = this.thumbnailCanvas.getContext('2d');
             this.videoControls = this.container.querySelector('.video-controls');
 
-            // --- NEW: Settings Menu Elements ---
+            // --- MODIFIED: Settings Menu Elements ---
             this.settingsBtn = this.container.querySelector('.settings-btn');
             this.settingsMenu = this.container.querySelector('.settings-menu .menu-content');
             this.menuPanelsWrapper = this.container.querySelector('.menu-panels-wrapper');
             this.menuItems = this.container.querySelectorAll('.menu-item, .menu-back-btn');
             this.speedSlider = this.container.querySelector('.speed-slider');
             this.speedDisplay = this.container.querySelector('.speed-display');
+            this.speedPanelDisplay = this.container.querySelector('.speed-panel-display'); // Added
             this.captionsMenuBtn = this.container.querySelector('.captions-menu-btn');
             this.captionSettingInputs = this.container.querySelectorAll('.caption-setting-input');
         }
@@ -318,7 +333,7 @@
             });
         }
 
-        // --- Core Player Methods (mostly unchanged) ---
+        // --- Core Player Methods ---
         togglePlay() { this.video.paused ? this.video.play() : this.video.pause(); }
         toggleMute() { this.video.muted = !this.video.muted; }
         toggleFullscreen() { if (!document.fullscreenElement) { this.container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); } else { document.exitFullscreen(); } }
@@ -339,7 +354,9 @@
             const speedIndex = this.PLAYBACK_SPEEDS.indexOf(newSpeed);
             if (speedIndex > -1) this.speedSlider.value = speedIndex;
             const speedText = newSpeed % 1 === 0 ? newSpeed.toFixed(1) : newSpeed.toString();
-            this.speedDisplay.textContent = `${speedText}×`;
+            const displayText = `${speedText}×`;
+            this.speedDisplay.textContent = displayText;
+            if(this.speedPanelDisplay) this.speedPanelDisplay.textContent = displayText; // Update panel display
         }
 
         updatePlayPauseIcon() { const isPaused = this.video.paused; this.container.classList.toggle('playing', !isPaused); this.container.classList.toggle('paused', isPaused); this.playPauseBtn.setAttribute('aria-label', isPaused ? 'Play' : 'Pause'); }
@@ -360,7 +377,7 @@
         }
 
         handlePlay() { this.updatePlayPauseIcon(); this.startProgressLoop(); this.hideControls(); }
-        handlePause() { this.updatePlayPauseIcon(); this.stopProgressLoop(); this.showControls(true); } // force show
+        handlePause() { this.updatePlayPauseIcon(); this.stopProgressLoop(); this.showControls(); } // MODIFIED: no longer forces controls open
         handleScrubbing(e) { const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; if (isNaN(this.video.duration)) return; const seekTime = percent * this.video.duration; this.progressBarFilled.style.width = `${percent * 100}%`; this.currentTimeEl.textContent = this._formatDisplayTime(seekTime); }
         updateSeekTooltip(e) { const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; if (isNaN(this.video.duration)) return; const seekTime = percent * this.video.duration; this.thumbnailVideo.currentTime = seekTime; this.seekTooltip.style.display = 'block'; this.tooltipTime.textContent = this._formatDisplayTime(seekTime); const tooltipWidth = this.seekTooltip.offsetWidth; const containerWidth = this.progressBarContainer.offsetWidth; let tooltipX = e.x - rect.x; tooltipX = Math.max(tooltipWidth / 2, Math.min(containerWidth - tooltipWidth / 2, tooltipX)); this.seekTooltip.style.left = `${tooltipX}px`; }
         handleScrubbingStart(e) { this.isScrubbing = true; this.wasPaused = this.video.paused; this.stopProgressLoop(); if (!this.wasPaused) this.video.pause(); this.handleScrubbing(e); }
@@ -383,8 +400,9 @@
         }
         
         hideControls() {
-            if (this.video.paused || this.isScrubbing || this.settingsMenu.classList.contains('visible')) {
-                this.showControls(true); // Keep controls visible if paused, scrubbing, or menu is open
+            // MODIFIED: No longer forces controls to show when paused
+            if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) {
+                this.showControls(true); // Keep controls visible if scrubbing or menu is open
                 return;
             }
             this.controlsTimeout = setTimeout(() => {
@@ -395,21 +413,22 @@
         }
 
         hideControlsOnLeave() {
-             if (this.video.paused || this.isScrubbing || this.settingsMenu.classList.contains('visible')) return;
+            // MODIFIED: No longer checks if video is paused
+             if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return;
              this.videoControls.classList.remove('visible');
              this.container.classList.remove('controls-visible');
         }
 
-        // --- NEW/REFACTORED MENU AND SETTINGS METHODS ---
+        // --- MENU AND SETTINGS METHODS ---
 
         toggleMenu(menu, button) {
             const isVisible = menu.classList.toggle('visible');
             button.classList.toggle('menu-open', isVisible);
             if (isVisible) {
-                this.showControls(true);
+                this.showControls(true); // Force controls to show when menu is open
             } else {
                 this.navigateMenu('main'); // Reset to main panel when closing
-                if (!this.video.paused) this.hideControls();
+                this.hideControls(); // Start timer to hide controls
             }
         }
         
