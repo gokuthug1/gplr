@@ -1,16 +1,15 @@
 /**
- * GokuPlr v1.6 (Updated)
+ * GokuPlr v1.7 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
  *
- * Change in v1.6:
- * - Player now starts at 100% volume by default.
- * - Controls and cursor now auto-hide after 2.6 seconds of inactivity.
- * - Fixed a bug where the caption settings menu item would not appear reliably.
- * - Player container now dynamically adjusts to the video's aspect ratio, reducing black bars.
- * - Made the time display in the seek tooltip unselectable.
- * - Improved robustness of the caption settings panel to ensure color and opacity sliders work together seamlessly.
- * - Minor UI adjustments for better layout and feel.
+ * Change in v1.7:
+ * - Added a volume booster feature (up to 200%) using the Web Audio API.
+ * - Volume booster can be toggled with a new lightning bolt icon, a settings menu option, or the Ctrl+Z shortcut.
+ * - Refined the settings menu UI for a more modern and compact appearance.
+ * - Added a static AudioContext to be shared across multiple player instances, which is best practice.
+ * - Encapsulated all new audio logic cleanly within the player class.
+ * - Minor bug fix: Player could fail to initialize if video src was not immediately available.
  */
 
 (function() {
@@ -24,6 +23,9 @@
 
     // The full, correct class implementation.
     class CustomVideoPlayer {
+        // Share a single AudioContext across all player instances on a page.
+        static audioContext = null;
+
         constructor(videoElement) {
             this.video = videoElement;
             if (!this.video) {
@@ -55,11 +57,9 @@
                 .video-player-container.fullscreen { max-width: none; width: 100%; height: 100%; border-radius: 0; aspect-ratio: auto; }
                 .video-player-container video { width: 100%; height: 100%; display: block; }
 
-                /* --- NEW: CAPTION STYLING --- */
                 .video-player-container video::cue { background-color: var(--caption-bg-color); color: var(--caption-font-color); font-size: var(--caption-font-size); font-family: var(--caption-font-family); transition: bottom var(--transition-speed) ease-in-out; bottom: 20px; }
                 .video-player-container.controls-visible.captions-on video::cue { bottom: 85px; }
                 @media (max-width: 600px) { .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } }
-                /* --- END NEW --- */
 
                 .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); opacity: 0; transition: opacity var(--transition-speed) ease-in-out; z-index: 2; }
                 .video-player-container .video-controls.visible { opacity: 1; }
@@ -99,27 +99,25 @@
                 .volume-container:hover .volume-thumb { opacity: 1; }
                 .time-display { color: var(--text-color); font-size: 14px; font-variant-numeric: tabular-nums; }
                 
-                /* --- MODIFIED: Big Play Button (Circle Removed) --- */
                 .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 1; padding: 0; }
                 .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); }
                 .big-play-button:hover svg { fill: var(--primary-color); }
                 .big-play-button svg { width: 80px; height: 80px; fill: var(--text-color); transition: fill var(--transition-speed); }
                 .video-player-container.playing .big-play-button { opacity: 0; pointer-events: none; }
 
-                /* --- NEW: Multi-Panel Settings Menu --- */
+                /* --- REFINED: Settings Menu --- */
                 .settings-menu { position: relative; }
-                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 290px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
+                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 270px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-                .menu-panels-wrapper { display: flex; transition: transform 0.25s ease-in-out; }
+                .menu-panels-wrapper { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
                 .menu-panel { width: 100%; flex-shrink: 0; padding: 8px; }
-                .menu-header { padding: 8px 12px; font-size: 15px; font-weight: bold; color: #ddd; border-bottom: 1px solid rgba(255, 255, 255, 0.15); margin: -8px -8px 8px -8px; display: flex; justify-content: space-between; align-items: center; }
-                .menu-item { background: none; border: none; border-radius: 4px; width: 100%; text-align: left; padding: 10px 12px; color: var(--text-color); font-size: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+                .menu-header { padding: 8px 12px; font-size: 15px; font-weight: 500; color: #eee; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin: -8px -8px 8px -8px; display: flex; justify-content: space-between; align-items: center; }
+                .menu-item { background: none; border: none; border-radius: 4px; width: 100%; text-align: left; padding: 10px 12px; color: var(--text-color); font-size: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
                 .menu-item:hover { background: rgba(255, 255, 255, 0.1); }
-                .menu-item-value { color: #aaa; }
-                .menu-back-btn { background: none; border: none; color: #ddd; font-size: 15px; padding: 8px 12px; margin: -8px -8px 8px -8px; width: calc(100% + 16px); text-align: left; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+                .menu-item-value { color: #aaa; font-size: 14px; }
+                .menu-back-btn { background: none; border: none; color: #eee; font-size: 15px; font-weight: 500; padding: 8px 12px; margin: -8px -8px 8px -8px; width: calc(100% + 16px); text-align: left; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
                 .menu-back-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-                /* --- MODIFIED: Settings Panel UI --- */
                 .speed-slider-container { padding: 12px; display: flex; align-items: center; gap: 12px; }
                 .speed-slider-container .speed-panel-display { color: #ccc; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 45px; text-align: right; }
                 .caption-settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 12px 15px; align-items: center; padding: 8px 12px; font-size: 14px; color: #eee; }
@@ -131,7 +129,6 @@
                 input[type=range].goku-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; margin-top: -5px; transition: background var(--transition-speed); }
                 input[type=range].goku-slider:hover::-webkit-slider-thumb, input[type=range].goku-slider:focus::-webkit-slider-thumb { background: var(--primary-color); }
                 input[type=range].goku-slider::-moz-range-thumb { width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; border: none; transition: background var(--transition-speed); }
-                /* --- END MODIFIED --- */
 
                 .control-button:focus-visible, .settings-menu button:focus-visible, input[type=range]:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
                 @media (max-width: 600px) { .volume-container:hover .volume-slider { width: 50px; } .time-display { font-size: 12px; } .control-button svg { width: 20px; height: 20px; } .controls-bottom, .controls-left, .controls-right { gap: 6px; } }
@@ -148,7 +145,7 @@
             container.appendChild(this.video);
 
             const controlsHtml = `
-                <video class="thumbnail-video" style="display: none;"></video>
+                <video class="thumbnail-video" muted playsinline style="display: none;"></video>
                 <button class="big-play-button" aria-label="Play Video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
                 <div class="video-controls">
                     <div class="progress-bar-container">
@@ -165,7 +162,10 @@
                             <div class="time-display"><span class="current-time">00:00</span> / <span class="total-time">00:00</span></div>
                         </div>
                         <div class="controls-right">
-                             <!-- MODIFIED SETTINGS MENU STRUCTURE -->
+                            <!-- NEW: Volume Booster Button -->
+                            <button class="control-button volume-booster-btn" aria-label="Toggle Volume Booster (Ctrl+Z)">
+                                <svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg>
+                            </button>
                             <div class="settings-menu">
                                 <button class="control-button settings-btn" aria-label="Settings">
                                     <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
@@ -173,6 +173,8 @@
                                 <div class="menu-content">
                                     <div class="menu-panels-wrapper">
                                         <div class="menu-panel main-panel">
+                                            <!-- NEW: Volume Booster Menu Item -->
+                                            <button class="menu-item volume-booster-toggle"><span>Volume Booster</span><span class="menu-item-value booster-status">Off</span></button>
                                             <button class="menu-item" data-target-panel="speed"><span>Playback Speed</span><span class="menu-item-value speed-display">1.0×</span></button>
                                             <button class="menu-item captions-menu-btn" data-target-panel="captions"><span>Captions</span><span class="menu-item-value">></span></button>
                                         </div>
@@ -235,20 +237,24 @@
             this.thumbnailCtx = this.thumbnailCanvas.getContext('2d');
             this.videoControls = this.container.querySelector('.video-controls');
 
-            // --- MODIFIED: Settings Menu Elements ---
+            // --- Settings & Booster Menu Elements ---
             this.settingsBtn = this.container.querySelector('.settings-btn');
             this.settingsMenu = this.container.querySelector('.settings-menu .menu-content');
             this.menuPanelsWrapper = this.container.querySelector('.menu-panels-wrapper');
             this.menuItems = this.container.querySelectorAll('.menu-item, .menu-back-btn');
             this.speedSlider = this.container.querySelector('.speed-slider');
             this.speedDisplay = this.container.querySelector('.speed-display');
-            this.speedPanelDisplay = this.container.querySelector('.speed-panel-display'); // Added
+            this.speedPanelDisplay = this.container.querySelector('.speed-panel-display');
             this.captionsMenuBtn = this.container.querySelector('.captions-menu-btn');
             this.captionSettingInputs = this.container.querySelectorAll('.caption-setting-input');
+            this.volumeBoosterBtn = this.container.querySelector('.volume-booster-btn');
+            this.volumeBoosterToggle = this.container.querySelector('.volume-booster-toggle');
+            this.boosterStatus = this.container.querySelector('.booster-status');
         }
 
         initializePlayerState() {
             this.PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            this.BOOSTER_LEVEL = 2; // e.g., 2 = 200% volume
             this.settings = {}; // Will be populated by loadSettings
             this.isScrubbing = false;
             this.isDraggingVolume = false;
@@ -256,6 +262,12 @@
             this.video.volume = 1;
             this.controlsTimeout = null;
             this.animationFrameId = null;
+            
+            // Volume Booster State
+            this.mediaSource = null;
+            this.boosterGainNode = null;
+            this.isBoosterActive = false;
+            
             this.handleDocumentMouseUp = this.handleDocumentMouseUp.bind(this);
             this.handleDocumentMouseMove = this.handleDocumentMouseMove.bind(this);
 
@@ -265,16 +277,23 @@
             this.captionsBtn.style.display = 'none';
             this.captionsMenuBtn.style.display = 'none';
             if (!document.pictureInPictureEnabled) { this.pipBtn.style.display = 'none'; }
-
-            if (this.video.currentSrc) {
-                this.thumbnailVideo.src = this.video.currentSrc;
-                this.downloadBtn.href = this.video.currentSrc;
-                try {
-                    const path = new URL(this.video.currentSrc).pathname;
-                    this.downloadBtn.download = path.substring(path.lastIndexOf('/') + 1) || 'video.mp4';
-                } catch (e) { this.downloadBtn.download = 'video.mp4'; }
-                this.downloadBtn.classList.remove('disabled');
+            // Hide booster button if Web Audio API is not supported (checked later)
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                 this.volumeBoosterBtn.style.display = 'none';
+                 this.volumeBoosterToggle.style.display = 'none';
             }
+
+            if (this.video.currentSrc) this.setupVideoSource(this.video.currentSrc);
+        }
+        
+        setupVideoSource(src) {
+            this.thumbnailVideo.src = src;
+            this.downloadBtn.href = src;
+            try {
+                const path = new URL(src).pathname;
+                this.downloadBtn.download = path.substring(path.lastIndexOf('/') + 1) || 'video.mp4';
+            } catch (e) { this.downloadBtn.download = 'video.mp4'; }
+            this.downloadBtn.classList.remove('disabled');
         }
 
         attachEventListeners() {
@@ -283,15 +302,22 @@
             this.video.addEventListener('pause', this.handlePause.bind(this));
             this.video.addEventListener('ended', () => this.stopProgressLoop());
             this.video.addEventListener('timeupdate', () => { if (!this.isScrubbing) this.updateTimeDisplay();
-            // Improvement: Adapt player aspect ratio to the video's actual dimensions
             if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
                 this.container.style.setProperty('aspect-ratio', this.video.videoWidth / this.video.videoHeight);
-            }
- });
+            }});
             this.video.addEventListener('volumechange', this.updateVolumeUI.bind(this));
             this.video.addEventListener('enterpictureinpicture', () => this.pipBtn.classList.add('active'));
             this.video.addEventListener('leavepictureinpicture', () => this.pipBtn.classList.remove('active'));
             this.thumbnailVideo.addEventListener('seeked', () => { this.thumbnailCtx.drawImage(this.thumbnailVideo, 0, 0, this.thumbnailCanvas.width, this.thumbnailCanvas.height); });
+            
+            // If the src is set dynamically, we need to catch it
+            new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                        if (this.video.currentSrc) this.setupVideoSource(this.video.currentSrc);
+                    }
+                });
+            }).observe(this.video, { attributes: true });
 
             [this.playPauseBtn, this.bigPlayBtn, this.video].forEach(el => el.addEventListener('click', () => this.togglePlay()));
             this.muteBtn.addEventListener('click', this.toggleMute.bind(this));
@@ -301,6 +327,8 @@
             this.settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleMenu(this.settingsMenu, this.settingsBtn); });
 
             this.speedSlider.addEventListener('input', () => { const speedValue = this.PLAYBACK_SPEEDS[this.speedSlider.value]; this.setSpeed(speedValue); });
+            this.volumeBoosterBtn.addEventListener('click', this.toggleVolumeBooster.bind(this));
+            this.volumeBoosterToggle.addEventListener('click', this.toggleVolumeBooster.bind(this));
 
             this.progressBarContainer.addEventListener('mousedown', this.handleScrubbingStart.bind(this));
             this.progressBarContainer.addEventListener('mousemove', this.updateSeekTooltip.bind(this));
@@ -316,7 +344,6 @@
             this.container.addEventListener('mousemove', this.showControls.bind(this));
             this.container.addEventListener('mouseleave', this.hideControlsOnLeave.bind(this));
             
-            // --- NEW: Menu Navigation & Caption Settings Listeners ---
             this.menuItems.forEach(item => {
                 item.addEventListener('click', (e) => {
                     const targetPanel = e.currentTarget.dataset.targetPanel;
@@ -327,8 +354,8 @@
                 input.addEventListener('input', this.handleCaptionInputChange.bind(this));
             });
         }
-
-        // --- Core Player Methods ---
+        
+        // --- Core Player & UI Methods ---
         togglePlay() { this.video.paused ? this.video.play() : this.video.pause(); }
         toggleMute() { this.video.muted = !this.video.muted; }
         toggleFullscreen() { if (!document.fullscreenElement) { this.container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); } else { document.exitFullscreen(); } }
@@ -339,7 +366,7 @@
             const isHidden = this.video.textTracks[0].mode === 'hidden';
             this.video.textTracks[0].mode = isHidden ? 'showing' : 'hidden';
             this.captionsBtn.classList.toggle('active', isHidden);
-            this.container.classList.toggle('captions-on', isHidden); // For CSS styling hook
+            this.container.classList.toggle('captions-on', isHidden);
         }
 
         setSpeed(speed) {
@@ -351,7 +378,7 @@
             const speedText = newSpeed % 1 === 0 ? newSpeed.toFixed(1) : newSpeed.toString();
             const displayText = `${speedText}×`;
             this.speedDisplay.textContent = displayText;
-            if(this.speedPanelDisplay) this.speedPanelDisplay.textContent = displayText; // Update panel display
+            if(this.speedPanelDisplay) this.speedPanelDisplay.textContent = displayText;
         }
 
         updatePlayPauseIcon() { const isPaused = this.video.paused; this.container.classList.toggle('playing', !isPaused); this.container.classList.toggle('paused', isPaused); this.playPauseBtn.setAttribute('aria-label', isPaused ? 'Play' : 'Pause'); }
@@ -362,13 +389,11 @@
         
         handleLoadedMetadata() {
             this.updateTimeDisplay();
-            // Improvement: Adapt player aspect ratio to the video's actual dimensions
             if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
                 this.container.style.setProperty('aspect-ratio', this.video.videoWidth / this.video.videoHeight);
             }
-
             this.updateProgressBar();
-            this.thumbnailVideo.src = this.video.src;
+            if (this.video.src && !this.thumbnailVideo.src) this.setupVideoSource(this.video.src);
             if (this.video.textTracks.length > 0) {
                 this.captionsBtn.style.display = 'flex';
                 this.captionsMenuBtn.style.display = 'flex';
@@ -377,141 +402,119 @@
         }
 
         handlePlay() { this.updatePlayPauseIcon(); this.startProgressLoop(); this.hideControls(); }
-        handlePause() { this.updatePlayPauseIcon(); this.stopProgressLoop(); this.showControls(); } // MODIFIED: no longer forces controls open
+        handlePause() { this.updatePlayPauseIcon(); this.stopProgressLoop(); this.showControls(); }
         handleScrubbing(e) { const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; if (isNaN(this.video.duration)) return; const seekTime = percent * this.video.duration; this.progressBarFilled.style.width = `${percent * 100}%`; this.currentTimeEl.textContent = this._formatDisplayTime(seekTime); }
-        updateSeekTooltip(e) { const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; if (isNaN(this.video.duration)) return; const seekTime = percent * this.video.duration; this.thumbnailVideo.currentTime = seekTime; this.seekTooltip.style.display = 'block'; this.tooltipTime.textContent = this._formatDisplayTime(seekTime); const tooltipWidth = this.seekTooltip.offsetWidth; const containerWidth = this.progressBarContainer.offsetWidth; let tooltipX = e.x - rect.x; tooltipX = Math.max(tooltipWidth / 2, Math.min(containerWidth - tooltipWidth / 2, tooltipX)); this.seekTooltip.style.left = `${tooltipX}px`; }
+        updateSeekTooltip(e) { const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; if (isNaN(this.video.duration) || !this.thumbnailVideo.src) return; const seekTime = percent * this.video.duration; this.thumbnailVideo.currentTime = seekTime; this.seekTooltip.style.display = 'block'; this.tooltipTime.textContent = this._formatDisplayTime(seekTime); const tooltipWidth = this.seekTooltip.offsetWidth; const containerWidth = this.progressBarContainer.offsetWidth; let tooltipX = e.x - rect.x; tooltipX = Math.max(tooltipWidth / 2, Math.min(containerWidth - tooltipWidth / 2, tooltipX)); this.seekTooltip.style.left = `${tooltipX}px`; }
         handleScrubbingStart(e) { this.isScrubbing = true; this.wasPaused = this.video.paused; this.stopProgressLoop(); if (!this.wasPaused) this.video.pause(); this.handleScrubbing(e); }
         handleVolumeDrag(e) { const rect = this.volumeSlider.getBoundingClientRect(); const level = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1); this.video.volume = level; this.video.muted = level === 0; }
         handleVolumeDragStart(e) { this.isDraggingVolume = true; this.handleVolumeDrag(e); }
         handleDocumentMouseMove(e) { if (this.isScrubbing) this.handleScrubbing(e); if (this.isDraggingVolume) this.handleVolumeDrag(e); }
         handleDocumentMouseUp(e) { if (this.isScrubbing) { this.isScrubbing = false; const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; this.video.currentTime = percent * this.video.duration; if (!this.wasPaused) this.video.play(); this.seekTooltip.style.display = 'none'; } if (this.isDraggingVolume) this.isDraggingVolume = false; }
         handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.closeAllMenus(); }
-        handleKeydown(e) { const tagName = document.activeElement.tagName.toLowerCase(); if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return; const key = e.key.toLowerCase(); const actions = { " ": this.togglePlay.bind(this), "k": this.togglePlay.bind(this), "m": this.toggleMute.bind(this), "f": this.toggleFullscreen.bind(this), "p": this.togglePip.bind(this), "arrowleft": () => { this.video.currentTime -= 5; }, "arrowright": () => { this.video.currentTime += 5; } }; if (actions[key]) { e.preventDefault(); actions[key](); } }
+        handleKeydown(e) { const tagName = document.activeElement.tagName.toLowerCase(); if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return; const key = e.key.toLowerCase(); if (e.ctrlKey && key === 'z') { e.preventDefault(); this.toggleVolumeBooster(); return; } const actions = { " ": this.togglePlay.bind(this), "k": this.togglePlay.bind(this), "m": this.toggleMute.bind(this), "f": this.toggleFullscreen.bind(this), "p": this.togglePip.bind(this), "arrowleft": () => { this.video.currentTime -= 5; }, "arrowright": () => { this.video.currentTime += 5; } }; if (actions[key]) { e.preventDefault(); actions[key](); } }
 
         startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
         stopProgressLoop() { cancelAnimationFrame(this.animationFrameId); }
         
-        showControls(force = false) {
-            clearTimeout(this.controlsTimeout);
-            this.container.classList.remove('no-cursor');
-            this.videoControls.classList.add('visible');
-            this.container.classList.add('controls-visible'); // For caption positioning
-            if (!force) { this.hideControls(); }
+        showControls(force = false) { clearTimeout(this.controlsTimeout); this.container.classList.remove('no-cursor'); this.videoControls.classList.add('visible'); this.container.classList.add('controls-visible'); if (!force) { this.hideControls(); } }
+        hideControls() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) { this.showControls(true); return; } this.controlsTimeout = setTimeout(() => { this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); this.container.classList.add('no-cursor'); }, 2600); }
+        hideControlsOnLeave() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return; this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); }
+
+        // --- NEW: Volume Booster Methods ---
+        async initializeAudioBooster() {
+            if (this.mediaSource) return true; // Already initialized
+        
+            try {
+                if (!window.AudioContext && !window.webkitAudioContext) {
+                    throw new Error("Web Audio API not supported.");
+                }
+        
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!CustomVideoPlayer.audioContext) {
+                    CustomVideoPlayer.audioContext = new AudioContext();
+                }
+        
+                if (CustomVideoPlayer.audioContext.state === 'suspended') {
+                    await CustomVideoPlayer.audioContext.resume();
+                }
+        
+                this.mediaSource = CustomVideoPlayer.audioContext.createMediaElementSource(this.video);
+                this.boosterGainNode = CustomVideoPlayer.audioContext.createGain();
+                this.boosterGainNode.gain.value = 1; // Start at normal volume
+        
+                this.mediaSource.connect(this.boosterGainNode);
+                this.boosterGainNode.connect(CustomVideoPlayer.audioContext.destination);
+                return true;
+        
+            } catch (e) {
+                console.error("Failed to initialize volume booster:", e.message);
+                this.volumeBoosterBtn.style.display = 'none';
+                this.volumeBoosterToggle.style.display = 'none';
+                return false;
+            }
         }
         
-        hideControls() {
-            // MODIFIED: No longer forces controls to show when paused
-            if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) {
-                this.showControls(true); // Keep controls visible if scrubbing or menu is open
-                return;
-            }
-            this.controlsTimeout = setTimeout(() => {
-                this.videoControls.classList.remove('visible');
-                this.container.classList.remove('controls-visible');
-                this.container.classList.add('no-cursor');
-            }, 2600);
-        }
-
-        hideControlsOnLeave() {
-            // MODIFIED: No longer checks if video is paused
-             if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return;
-             this.videoControls.classList.remove('visible');
-             this.container.classList.remove('controls-visible');
+        async toggleVolumeBooster() {
+            const isInitialized = await this.initializeAudioBooster();
+            if (!isInitialized) return;
+        
+            this.isBoosterActive = !this.isBoosterActive;
+            this.boosterGainNode.gain.value = this.isBoosterActive ? this.BOOSTER_LEVEL : 1;
+            
+            // Update UI
+            this.volumeBoosterBtn.classList.toggle('active', this.isBoosterActive);
+            this.boosterStatus.textContent = this.isBoosterActive ? 'On' : 'Off';
+            console.log(`Volume booster ${this.isBoosterActive ? 'enabled' : 'disabled'}.`);
         }
 
         // --- MENU AND SETTINGS METHODS ---
-
-        toggleMenu(menu, button) {
-            const isVisible = menu.classList.toggle('visible');
-            button.classList.toggle('menu-open', isVisible);
-            if (isVisible) {
-                this.showControls(true); // Force controls to show when menu is open
-            } else {
-                this.navigateMenu('main'); // Reset to main panel when closing
-                this.hideControls(); // Start timer to hide controls
-            }
-        }
-        
-        closeAllMenus() {
-            this.settingsMenu.classList.remove('visible');
-            this.settingsBtn.classList.remove('menu-open');
-            this.navigateMenu('main');
-        }
-
-        navigateMenu(panelName) {
-            const panelIndex = { 'main': 0, 'speed': 1, 'captions': 2 };
-            const index = panelIndex[panelName] || 0;
-            this.menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`;
-        }
+        toggleMenu(menu, button) { const isVisible = menu.classList.toggle('visible'); button.classList.toggle('menu-open', isVisible); if (isVisible) { this.showControls(true); } else { this.navigateMenu('main'); this.hideControls(); } }
+        closeAllMenus() { this.settingsMenu.classList.remove('visible'); this.settingsBtn.classList.remove('menu-open'); this.navigateMenu('main'); }
+        navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions': 2 }; const index = panelIndex[panelName] || 0; this.menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
         
         handleCaptionInputChange(e) {
             const input = e.currentTarget;
             const setting = input.dataset.setting;
             let value;
-
-            // This logic correctly links color pickers with their associated opacity sliders.
             if (input.id === 'caption-bg-color') {
-                // The main background color picker changed.
                 const opacitySlider = this.container.querySelector('#caption-bg-opacity');
                 const opacity = parseInt(opacitySlider.value, 10) / 100;
                 value = this.hexToRgba(input.value, opacity);
             } else if (input.id === 'caption-bg-opacity') {
-                // The background opacity slider changed.
                 const colorInput = this.container.querySelector('#caption-bg-color');
                 const opacity = parseInt(input.value, 10) / 100;
                 value = this.hexToRgba(colorInput.value, opacity);
             } else {
-                // For all other inputs (accent color, font size, font family).
                 value = input.value;
-                if (input.dataset.unit) {
-                    value += input.dataset.unit;
-                }
+                if (input.dataset.unit) value += input.dataset.unit;
             }
-            
             this.settings[setting] = value;
             this.applySettings();
             this.saveSettings();
         }
 
-        hexToRgba(hex, opacity) {
-            const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
-            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-        }
-
-        applySettings() {
-            for (const key in this.settings) {
-                this.container.style.setProperty(`--${key}`, this.settings[key]);
-            }
-        }
+        hexToRgba(hex, opacity) { const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16)); return `rgba(${r}, ${g}, ${b}, ${opacity})`; }
+        applySettings() { for (const key in this.settings) { this.container.style.setProperty(`--${key}`, this.settings[key]); } }
 
         loadSettings() {
-            const savedSettings = JSON.parse(localStorage.getItem('goku-plr-settings'));
-            const defaultSettings = {
-                'primary-color': '#00a8ff',
-                'caption-font-family': 'Arial, sans-serif',
-                'caption-font-size': '22px',
-                'caption-font-color': '#ffffff',
-                'caption-bg-color': 'rgba(0, 0, 0, 0.75)'
-            };
-            this.settings = { ...defaultSettings, ...savedSettings };
-            this.applySettings();
-            this.updateSettingsUI();
+            try {
+                const savedSettings = JSON.parse(localStorage.getItem('goku-plr-settings'));
+                const defaultSettings = { 'primary-color': '#00a8ff', 'caption-font-family': 'Arial, sans-serif', 'caption-font-size': '22px', 'caption-font-color': '#ffffff', 'caption-bg-color': 'rgba(0, 0, 0, 0.75)' };
+                this.settings = { ...defaultSettings, ...(savedSettings || {}) };
+                this.applySettings();
+                this.updateSettingsUI();
+            } catch (e) { console.error("Could not load player settings.", e); }
         }
 
         updateSettingsUI() {
-            // Set UI inputs to match loaded settings
             this.captionSettingInputs.forEach(input => {
                 const setting = input.dataset.setting;
                 let value = this.settings[setting];
                 if (!value) return;
-
                 if (input.dataset.isOpacity) {
                     const rgbaMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-                    if (rgbaMatch) {
-                        input.value = Math.round(parseFloat(rgbaMatch[4]) * 100);
-                    }
+                    if (rgbaMatch) input.value = Math.round(parseFloat(rgbaMatch[4]) * 100);
                 } else if (input.type === 'color' && value.startsWith('rgba')) {
-                    // Convert rgba back to hex for color input
                     const [r, g, b] = value.match(/\d+/g);
                     input.value = `#${(+r).toString(16).padStart(2, '0')}${(+g).toString(16).padStart(2, '0')}${(+b).toString(16).padStart(2, '0')}`;
                 } else {
@@ -520,14 +523,10 @@
             });
         }
 
-        saveSettings() {
-            localStorage.setItem('goku-plr-settings', JSON.stringify(this.settings));
-        }
-
-        _formatDisplayTime(timeInSeconds) { if (isNaN(timeInSeconds)) return '00:00'; const date = new Date(timeInSeconds * 1000); const timeString = date.toISOString().slice(11, 19); return this.video.duration >= 3600 ? timeString : timeString.slice(3); }
+        saveSettings() { try { localStorage.setItem('goku-plr-settings', JSON.stringify(this.settings)); } catch (e) { console.error("Could not save player settings.", e); } }
+        _formatDisplayTime(timeInSeconds) { if (isNaN(timeInSeconds)) return '00:00'; const date = new Date(timeInSeconds * 1000); const timeString = date.toISOString().slice(11, 19); return (this.video.duration || 0) >= 3600 ? timeString : timeString.slice(3); }
     }
 
-    // This is the "trigger" that runs automatically.
     document.addEventListener('DOMContentLoaded', () => {
         const videosToCustomize = document.querySelectorAll('video.cvp');
         videosToCustomize.forEach(videoEl => {
