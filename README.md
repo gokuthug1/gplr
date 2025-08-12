@@ -1,7 +1,6 @@
 # GokuPlr - A Custom HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.net/v1/package/gh/gokuthug1/gplr/badge)
-
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?)
 A lightweight, modern, and skinnable HTML5 video player that can be added to any website with a single line of code. This project transforms standard `<video>` elements into a beautiful, feature-rich player with a clean, responsive UI and no external dependencies.
 
 ---
