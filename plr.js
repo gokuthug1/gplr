@@ -163,7 +163,7 @@
                         <div class="controls-left">
                             <button class="control-button play-pause-btn" aria-label="Play/Pause"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5V19L19 12L8 5Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z"></path></svg></button>
                             <div class="volume-container">
-                                <button class="control-button mute-btn" aria-label="Mute/Unmute"><svg class="volume-high-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.84 14 18.7V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"></path></svg><svg class="volume-medium-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12Z"></path></svg><svg class="volume-low-icon" viewBox="0 0 24 24"><path d="M3 9H7L12 4V20L7 15H3V9Z"></path></svg><svg class="muted-icon" viewBox="0 0 24 24"><path d="M16.5 12C16.5 10.23 15.54 8.71 14 7.97V10.18L16.45 12.63C16.5 12.43 16.5 12.21 16.5 12ZM19 12C19 12.94 18.8 13.82 18.46 14.64L19.97 16.15C20.62 14.91 21 13.5 21 12C21 7.72 18.01 4.14 14 3.23V5.29C16.89 6.15 19 8.83 19 12ZM4.27 3L3 4.27L7.73 9H3V15H7L12 20V13.27L16.25 17.52C15.58 17.84 14.83 18.08 14 18.22V20.29C14.91 20.13 15.77 19.82 16.55 19.38L18.73 21.56L20 20.28L4.27 3ZM12 4L10.12 5.88L12 7.76V4Z"></path></svg></button>
+                                <button class="control-button mute-btn" aria-label="Mute/Unmute"><svg class="volume-high-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.84 14 18.7V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"></path></svg><svg class="volume-medium-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12Z"></path></svg><svg class="volume-low-icon" viewBox="0 0 24 24"><path d="M3 9H7L12 4V20L7 15H3V9Z"></path></svg><svg class="muted-icon" viewBox="0 0 24 24"><path d="M16.5 12C16.5 10.23 15.54 8.71 14 7.97V10.18L16.45 12.63C16.5 12.43 16.5 12.21 16.5 12ZM19 12C19 12.94 18.8 13.82 18.46 14.64L19.97 16.15C20.62 14.91 21 13.5 21 12C21 7.72 18.01 4.14 14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.84 14 18.7V20.77C14.91 20.13 15.77 19.82 16.55 19.38L18.73 21.56L20 20.28L4.27 3ZM3 4.27L7.73 9H3V15H7L12 20V13.27L16.25 17.52C15.58 17.84 14.83 18.08 14 18.22V20.29C14.91 20.13 15.77 19.82 16.55 19.38L18.73 21.56L20 20.28L4.27 3ZM12 4L10.12 5.88L12 7.76V4Z"></path></svg></button>
                                 <div class="volume-slider"><div class="volume-filled"></div><div class="volume-thumb"></div></div>
                             </div>
                             <div class="time-display"><span class="current-time">00:00</span> / <span class="total-time">00:00</span></div>
@@ -217,8 +217,7 @@
                             </div>
                             <button class="control-button captions-btn" aria-label="Toggle Captions"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"></path></svg></button>
                             <button class="control-button pip-btn" aria-label="Picture-in-Picture"><svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"></path></svg></button>
-                            <button class="control-button fullscreen-btn" aria-label="Toggle Fullscreen"><svg class="enter-fs-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg><svg class="exit-fs-icon" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg></button>
-                            <a href="#" class="control-button download-btn disabled" aria-label="Download Video"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg></a>
+                            <button class="control-button download-btn disabled" aria-label="Download Video"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg></button>
                         </div>
                     </div>
                 </div>`;
@@ -304,11 +303,7 @@
         
         setupVideoSource(src) {
             this.thumbnailVideo.src = src;
-            this.downloadBtn.href = src;
-            try {
-                const path = new URL(src).pathname;
-                this.downloadBtn.download = path.substring(path.lastIndexOf('/') + 1) || 'video.mp4';
-            } catch (e) { this.downloadBtn.download = 'video.mp4'; }
+            // Removed direct href/download attribute setting, now handled by handleDownloadVideo
             this.downloadBtn.classList.remove('disabled');
         }
 
@@ -344,6 +339,8 @@
             // REFACTORED: The main CC button now uses the new toggle logic
             this.captionsBtn.addEventListener('click', this.toggleCaptions.bind(this));
             this.settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleMenu(this.settingsMenu, this.settingsBtn); });
+            // Added click listener for download button
+            this.downloadBtn.addEventListener('click', this.handleDownloadVideo.bind(this));
 
             this.speedSlider.addEventListener('input', () => { const speedValue = this.PLAYBACK_SPEEDS[this.speedSlider.value]; this.setSpeed(speedValue); });
             this.volumeBoosterBtn.addEventListener('click', this.toggleVolumeBooster.bind(this));
@@ -462,6 +459,64 @@
         showControls(force = false) { clearTimeout(this.controlsTimeout); this.container.classList.remove('no-cursor'); this.videoControls.classList.add('visible'); this.container.classList.add('controls-visible'); if (!force) { this.hideControls(); } }
         hideControls() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) { this.showControls(true); return; } this.controlsTimeout = setTimeout(() => { this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); this.container.classList.add('no-cursor'); }, 2600); }
         hideControlsOnLeave() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return; this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); }
+
+        // --- NEW: Direct Video Download Method ---
+        async handleDownloadVideo() {
+            if (!this.video.currentSrc || this.downloadBtn.classList.contains('disabled')) {
+                console.warn("No video source available or download button is disabled.");
+                return;
+            }
+
+            const videoUrl = this.video.currentSrc;
+            let filename = 'video.mp4'; // Default filename
+            try {
+                const url = new URL(videoUrl);
+                const path = url.pathname;
+                // Extract filename from path, handling query parameters if any
+                filename = path.substring(path.lastIndexOf('/') + 1) || 'video.mp4';
+                if (filename.includes('?')) {
+                    filename = filename.split('?')[0];
+                }
+            } catch (e) {
+                console.warn("Could not parse video URL for filename, using default.", e);
+            }
+
+            // Fallback to a generic filename if the videoUrl is just a data blob or something unparseable
+            if (!filename.includes('.')) {
+                filename += '.mp4'; // Assume mp4 if no extension is found
+            }
+
+            try {
+                // Fetch the video content as a Blob
+                const response = await fetch(videoUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const videoBlob = await response.blob();
+
+                // Create a temporary anchor element
+                const a = document.createElement('a');
+                a.style.display = 'none'; // Hide the anchor
+                document.body.appendChild(a);
+
+                // Create a URL for the Blob and set it as the href
+                const blobUrl = window.URL.createObjectURL(videoBlob);
+                a.href = blobUrl;
+                a.download = filename; // Set the download attribute with the determined filename
+
+                // Programmatically click the anchor to trigger the download
+                a.click();
+
+                // Clean up: revoke the object URL and remove the temporary anchor
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+
+                console.log(`Download started for ${filename}`);
+            } catch (error) {
+                console.error("Failed to download video:", error);
+                alert(`Failed to download video. Error: ${error.message}. This might be due to server configuration (CORS) or network issues.`);
+            }
+        }
 
         // --- REFACTORED: New Caption System Methods ---
 
