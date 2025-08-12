@@ -1,5 +1,5 @@
 /**
- * GokuPlr v1.8.0 (Updated)
+ * GokuPlr v1.8.2 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
  * Change in v1.8.0:
@@ -217,6 +217,7 @@
                             </div>
                             <button class="control-button captions-btn" aria-label="Toggle Captions"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"></path></svg></button>
                             <button class="control-button pip-btn" aria-label="Picture-in-Picture"><svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"></path></svg></button>
+                            <button class="control-button fullscreen-btn" aria-label="Enter Fullscreen"><svg class="enter-fs-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg><svg class="exit-fs-icon" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg></button>
                             <button class="control-button download-btn disabled" aria-label="Download Video"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg></button>
                         </div>
                     </div>
@@ -289,7 +290,11 @@
 
             this.updatePlayPauseIcon();
             this.updateVolumeUI();
-            this.setSpeed(1);
+            
+            // FIX: Load saved speed or use default
+            const savedSpeed = parseFloat(localStorage.getItem('goku-plr-speed'));
+            this.setSpeed(this.PLAYBACK_SPEEDS.includes(savedSpeed) ? savedSpeed : 1, false); // Don't save on initial load
+            
             this.captionsBtn.style.display = 'none';
             this.captionsMenuBtn.style.display = 'none';
             if (!document.pictureInPictureEnabled) { this.pipBtn.style.display = 'none'; }
@@ -387,10 +392,17 @@
         toggleFullscreen() { if (!document.fullscreenElement) { this.container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); } else { document.exitFullscreen(); } }
         togglePip() { if (document.pictureInPictureElement) { document.exitPictureInPicture(); } else if (document.pictureInPictureEnabled) { this.video.requestPictureInPicture(); } }
 
-        setSpeed(speed) {
+        setSpeed(speed, save = true) {
             const newSpeed = parseFloat(speed);
             if (!this.PLAYBACK_SPEEDS.includes(newSpeed)) return;
             this.video.playbackRate = newSpeed;
+            if (save) {
+                try {
+                    localStorage.setItem('goku-plr-speed', newSpeed);
+                } catch (e) {
+                    console.error("Could not save player speed.", e);
+                }
+            }
             const speedIndex = this.PLAYBACK_SPEEDS.indexOf(newSpeed);
             if (speedIndex > -1) this.speedSlider.value = speedIndex;
             const speedText = newSpeed % 1 === 0 ? newSpeed.toFixed(1) : newSpeed.toString();
