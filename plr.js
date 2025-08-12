@@ -1,8 +1,8 @@
 /**
- * GokuPlr v1.7.2 (Updated)
+ * GokuPlr v1.7.3 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
- *
+ * Change in v1.7.3: Refactor
  * Change in v1.7.2:
  * - Fixed a critical bug where the settings menu navigation (for Captions, Speed, etc.) was broken by the new volume booster button.
  * - Refactored menu event handling to be more robust using event delegation, preventing future conflicts.
@@ -408,48 +408,48 @@
         handleDocumentMouseMove(e) { if (this.isScrubbing) this.handleScrubbing(e); if (this.isDraggingVolume) this.handleVolumeDrag(e); }
         handleDocumentMouseUp(e) { if (this.isScrubbing) { this.isScrubbing = false; const rect = this.progressBarContainer.getBoundingClientRect(); const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width; this.video.currentTime = percent * this.video.duration; if (!this.wasPaused) this.video.play(); this.seekTooltip.style.display = 'none'; } if (this.isDraggingVolume) this.isDraggingVolume = false; }
         handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.closeAllMenus(); }
-handleKeydown(e) {const tagName = document.activeElement.tagName.toLowerCase();
-    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return;
-    const key = e.key.toLowerCase();
-    if (e.ctrlKey && key === 'z') {
-        e.preventDefault();
-        this.toggleVolumeBooster();
-        return;
-    }
-    const actions = {
-        " ": this.togglePlay.bind(this),
-        "k": this.togglePlay.bind(this),
-        "m": this.toggleMute.bind(this),
-        "f": this.toggleFullscreen.bind(this),
-        "p": this.togglePip.bind(this),
-        "arrowleft": () => { this.video.currentTime -= 5; },
-        "arrowright": () => { this.video.currentTime += 5; },
-        "j": () => { this.video.currentTime -= 10; },
-        "l": () => { this.video.currentTime += 10; }
-    };
-    if (actions[key]) {
-        e.preventDefault();
-        actions[key]();
-    }
-}
+        
+        handleKeydown(e) {
+            const tagName = document.activeElement.tagName.toLowerCase();
+            if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return;
+            const key = e.key.toLowerCase();
+            if (e.ctrlKey && key === 'z') {
+                e.preventDefault();
+                this.toggleVolumeBooster();
+                return;
+            }
+            const actions = {
+                " ": this.togglePlay.bind(this),
+                "k": this.togglePlay.bind(this),
+                "m": this.toggleMute.bind(this),
+                "f": this.toggleFullscreen.bind(this),
+                "p": this.togglePip.bind(this),
+                "arrowleft": () => { this.video.currentTime -= 5; },
+                "arrowright": () => { this.video.currentTime += 5; },
+                "j": () => { this.video.currentTime -= 10; },
+                "l": () => { this.video.currentTime += 10; }
+            };
+            if (actions[key]) {
+                e.preventDefault();
+                actions[key]();
+            }
+        }
+        
         updateCaptionButtonVisibility() {
             const hasTracks = this.video.textTracks && this.video.textTracks.length > 0;
             const displayStyle = hasTracks ? 'flex' : 'none';
 
-            // Update visibility of both the main button and the settings menu item
             this.captionsBtn.style.display = displayStyle;
             this.captionsMenuBtn.style.display = displayStyle;
 
             if (hasTracks) {
-                // By default, captions should be off. 'hidden' ensures the track is available but not visible.
                 this.video.textTracks[0].mode = 'hidden';
-                // Ensure the UI state is correct on load
                 this.captionsBtn.classList.remove('active');
                 this.container.classList.remove('captions-on');
             }
         }
 
-                startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
+        startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
         stopProgressLoop() { cancelAnimationFrame(this.animationFrameId); }
         
         showControls(force = false) { clearTimeout(this.controlsTimeout); this.container.classList.remove('no-cursor'); this.videoControls.classList.add('visible'); this.container.classList.add('controls-visible'); if (!force) { this.hideControls(); } }
