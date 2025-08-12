@@ -80,3 +80,48 @@ Here is a complete, working example. This example includes multiple caption trac
 
 </body>
 </html>
+```
+
+### Keyboard Shortcuts
+
+| **Key** | **Action** |
+| :--- | :--- |
+| `Space` or `K` | Toggle Play/Pause |
+| `M` | Toggle Mute/Unmute |
+| `F` | Toggle Fullscreen |
+| `P` | Toggle Picture-in-Picture |
+| `L` | Seek Forward 10 seconds |
+| `→` (Right Arrow) | Seek Forward 5 seconds |
+| `J` | Seek Backward 10 seconds |
+| `←` (Left Arrow) | Seek Backward 5 seconds |
+| `Ctrl` + `Z` | Toggle Volume Booster |
+
+---
+
+## Customization & Theming
+
+Set default styles by overriding CSS Custom Properties in your own stylesheet. While users can change these in the settings menu, this defines your site's base theme.
+
+```css
+/* Example: A red and dark theme with sharp corners */
+:root {
+  --primary-color: #e74c3c;
+  --controls-bg: rgba(15, 15, 15, 0.9);
+  --border-radius: 4px;
+}
+```
+
+### Available Variables:
+- `--primary-color`
+- `--text-color`
+- `--controls-bg`
+- `--menu-bg`
+- `--progress-bar-bg`
+- `--border-radius`
+- `--caption-font-family`, `--caption-font-size`, `--caption-font-color`, `--caption-bg-color`
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
