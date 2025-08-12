@@ -1,6 +1,6 @@
 # GokuPlr - A Custom HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?)
+![jsDelivr](https://data.jsdelivr.net/v1/package/gh/gokuthug1/gplr/badge?style=flat&label=v1.8.0)
 
 A lightweight, modern, and skinnable HTML5 video player that can be added to any website with a single line of code. This project transforms standard `<video>` elements into a beautiful, feature-rich player with a clean, responsive UI and no external dependencies.
 
@@ -9,10 +9,11 @@ A lightweight, modern, and skinnable HTML5 video player that can be added to any
 ## Features
 
 - **Modern, Auto-Hiding UI:** Clean controls that disappear during playback for an unobstructed view.
+- **Professional Captions Menu:** Automatically detects and lists multiple language tracks (e.g., English, Spanish). The UI clearly separates track selection from style customization.
 - **Volume Booster:** Use the Web Audio API to boost volume up to 200%, accessible via an icon, the settings menu, or a keyboard shortcut.
 - **Advanced Settings Menu:**
     - Playback speed control (0.5x to 2x).
-    - Comprehensive caption styling: font family, size, color, background color, and background opacity.
+    - Customize caption appearance: font, size, color, background, and opacity.
     - Customize the player's primary accent color.
     - Settings are saved locally to persist across sessions.
 - **Thumbnail Previews:** See a video preview when hovering over the progress bar.
@@ -30,7 +31,7 @@ To use GokuPlr, add the `cvp` class to your `<video>` tag and include the script
 
 ### Full Page Example (`index.html`)
 
-Here is a complete, working example. You can copy this code into an `index.html` file and open it in your browser to see the player in action.
+Here is a complete, working example. This example includes multiple caption tracks to showcase the new captions menu. You can copy this code into an `index.html` file and open it in your browser to see the player in action.
 
 ```html
 <!DOCTYPE html>
@@ -69,53 +70,13 @@ Here is a complete, working example. You can copy this code into an `index.html`
           poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
+          <!-- The player will automatically detect all tracks and build the captions menu -->
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
+          <track kind="captions" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="Español" />
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.7.3/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.0/plr.js" defer></script>
 
 </body>
 </html>
-```
-
-### Keyboard Shortcuts
-
-| **Key** | **Action** |
-| :--- | :--- |
-| `Space` or `K` | Toggle Play/Pause |
-| `M` | Toggle Mute/Unmute |
-| `F` | Toggle Fullscreen |
-| `P` | Toggle Picture-in-Picture |
-| `→` (Right Arrow) | Seek Forward 5 seconds |
-| `←` (Left Arrow) | Seek Backward 5 seconds |
-| `Ctrl` + `Z` | Toggle Volume Booster |
-
----
-
-## Customization & Theming
-
-Set default styles by overriding CSS Custom Properties in your own stylesheet. While users can change these in the settings menu, this defines your site's base theme.
-
-```css
-:root {
-  --primary-color: #e74c3c;        /* Red theme */
-  --controls-bg: rgba(15, 15, 15, 0.9);
-  --border-radius: 4px;           /* Sharper corners */
-}
-```
-
-### Available Variables:
-- `--primary-color`
-- `--text-color`
-- `--controls-bg`
-- `--menu-bg`
-- `--progress-bar-bg`
-- `--border-radius`
-- `--caption-font-family`, `--caption-font-size`, `--caption-font-color`, `--caption-bg-color`
-
----
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
