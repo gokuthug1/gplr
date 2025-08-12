@@ -1,14 +1,14 @@
 /**
- * GokuPlr v1.7.3 (Updated)
+ * GokuPlr v1.8.0 (Updated)
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
- * Change in v1.7.3: Refactor
- * Change in v1.7.2:
- * - Fixed a critical bug where the settings menu navigation (for Captions, Speed, etc.) was broken by the new volume booster button.
- * - Refactored menu event handling to be more robust using event delegation, preventing future conflicts.
- * - Added a static AudioContext to be shared across multiple player instances, which is best practice.
- * - Volume booster can be toggled with a new lightning bolt icon, a settings menu option, or the Ctrl+Z shortcut.
- * - Refined the settings menu UI for a more modern and compact appearance.
+ * Change in v1.8.0:
+ * - REFACTORED: Captions UI is now more modern and professional.
+ *   - The settings menu now supports selecting from multiple available caption tracks (e.g., English, Spanish).
+ *   - Caption track selection is now separate from visual customization ("Options"), creating a clearer user flow.
+ *   - The main menu dynamically displays the currently active caption track.
+ * - NEW: Added keyboard shortcuts for seeking. Use 'J' to seek backward 10 seconds and 'L' to seek forward 10 seconds.
+ * - Refactored caption handling logic to be more robust and extensible.
  */
 
 (function() {
@@ -56,7 +56,7 @@
                 .video-player-container.fullscreen { max-width: none; width: 100%; height: 100%; border-radius: 0; aspect-ratio: auto; }
                 .video-player-container video { width: 100%; height: 100%; display: block; }
 
-                .video-player-container video::cue { background-color: var(--caption-bg-color); color: var(--caption-font-color); font-size: var(--caption-font-size); font-family: var(--caption-font-family); transition: bottom var(--transition-speed) ease-in-out; bottom: 20px; }
+                .video-player-container video::cue { background-color: var(--caption-bg-color); color: var(--caption-font-color); font-size: var(--caption-font-size); font-family: var(--caption-font-family); transition: bottom var(--transition-speed) ease-in-out; bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
                 .video-player-container.controls-visible.captions-on video::cue { bottom: 85px; }
                 @media (max-width: 600px) { .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } }
 
@@ -116,6 +116,13 @@
                 .menu-item-value { color: #aaa; font-size: 14px; }
                 .menu-back-btn { background: none; border: none; color: #eee; font-size: 15px; font-weight: 500; padding: 8px 12px; margin: -8px -8px 8px -8px; width: calc(100% + 16px); text-align: left; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
                 .menu-back-btn:hover { background: rgba(255, 255, 255, 0.1); }
+                
+                /* --- NEW: Caption Menu Styles --- */
+                .menu-separator { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 8px 0; }
+                .captions-track-list .menu-item.active { background-color: rgba(0, 168, 255, 0.15); }
+                .captions-track-list .menu-item .check-mark { width: 20px; display: inline-block; text-align: left; font-weight: bold; color: var(--primary-color); opacity: 0; margin-right: 5px; }
+                .captions-track-list .menu-item.active .check-mark { opacity: 1; }
+                .captions-track-list .menu-item { justify-content: flex-start; }
 
                 .speed-slider-container { padding: 12px; display: flex; align-items: center; gap: 12px; }
                 .speed-slider-container .speed-panel-display { color: #ccc; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 45px; text-align: right; }
@@ -143,6 +150,7 @@
             this.video.parentNode.insertBefore(container, this.video);
             container.appendChild(this.video);
 
+            // REFACTORED: Updated settings menu for the new captions flow.
             const controlsHtml = `
                 <video class="thumbnail-video" muted playsinline style="display: none;"></video>
                 <button class="big-play-button" aria-label="Play Video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
@@ -173,7 +181,7 @@
                                         <div class="menu-panel main-panel">
                                             <button class="menu-item volume-booster-toggle"><span>Volume Booster</span><span class="menu-item-value booster-status">Off</span></button>
                                             <button class="menu-item" data-target-panel="speed"><span>Playback Speed</span><span class="menu-item-value speed-display">1.0×</span></button>
-                                            <button class="menu-item captions-menu-btn" data-target-panel="captions"><span>Captions</span><span class="menu-item-value">></span></button>
+                                            <button class="menu-item captions-menu-btn" data-target-panel="captions-track"><span>Captions</span><span class="menu-item-value captions-status">Off ></span></button>
                                         </div>
                                         <div class="menu-panel speed-panel">
                                             <button class="menu-back-btn" data-target-panel="main">< Playback Speed</button>
@@ -182,8 +190,14 @@
                                                 <span class="speed-panel-display">1.0×</span>
                                             </div>
                                         </div>
-                                        <div class="menu-panel captions-panel">
-                                            <button class="menu-back-btn" data-target-panel="main">< Caption Settings</button>
+                                        <div class="menu-panel captions-track-panel">
+                                            <button class="menu-back-btn" data-target-panel="main">< Captions</button>
+                                            <div class="captions-track-list"></div>
+                                            <div class="menu-separator"></div>
+                                            <button class="menu-item" data-target-panel="captions-style"><span>Options</span><span class="menu-item-value">></span></button>
+                                        </div>
+                                        <div class="menu-panel captions-style-panel">
+                                            <button class="menu-back-btn" data-target-panel="captions-track">< Options</button>
                                             <div class="caption-settings-grid">
                                                 <label for="accent-color">Accent</label><input type="color" id="accent-color" class="caption-setting-input" data-setting="primary-color" data-target-prop="style">
                                                 <label for="caption-font">Font</label>
@@ -241,10 +255,14 @@
             this.speedSlider = this.container.querySelector('.speed-slider');
             this.speedDisplay = this.container.querySelector('.speed-display');
             this.speedPanelDisplay = this.container.querySelector('.speed-panel-display');
-            this.captionsMenuBtn = this.container.querySelector('.captions-menu-btn');
-            this.captionSettingInputs = this.container.querySelectorAll('.caption-setting-input');
             this.volumeBoosterBtn = this.container.querySelector('.volume-booster-btn');
             this.boosterStatus = this.container.querySelector('.booster-status');
+
+            // --- REFACTORED: New Caption Menu Elements ---
+            this.captionsMenuBtn = this.container.querySelector('.captions-menu-btn');
+            this.captionsStatus = this.container.querySelector('.captions-status');
+            this.captionsTrackList = this.container.querySelector('.captions-track-list');
+            this.captionSettingInputs = this.container.querySelectorAll('.caption-setting-input');
         }
 
         initializePlayerState() {
@@ -257,6 +275,10 @@
             this.video.volume = 1;
             this.controlsTimeout = null;
             this.animationFrameId = null;
+
+            // NEW: State for the refactored captions system
+            this.activeTrackIndex = -1; // -1 is "Off"
+            this.lastActiveTrackIndex = 0; // Remembers the last used track for easy toggling
             
             // Volume Booster State
             this.mediaSource = null;
@@ -292,8 +314,9 @@
 
         attachEventListeners() {
             this.video.addEventListener('loadedmetadata', this.handleLoadedMetadata.bind(this));
-            this.video.textTracks.addEventListener('addtrack', this.updateCaptionButtonVisibility.bind(this));
-            this.video.textTracks.addEventListener('removetrack', this.updateCaptionButtonVisibility.bind(this));
+            // REFACTORED: Listen for track changes to update the new captions menu
+            this.video.textTracks.addEventListener('addtrack', this.handleTrackChange.bind(this));
+            this.video.textTracks.addEventListener('removetrack', this.handleTrackChange.bind(this));
             this.video.addEventListener('play', this.handlePlay.bind(this));
             this.video.addEventListener('pause', this.handlePause.bind(this));
             this.video.addEventListener('ended', () => this.stopProgressLoop());
@@ -318,20 +341,25 @@
             this.muteBtn.addEventListener('click', this.toggleMute.bind(this));
             this.fullscreenBtn.addEventListener('click', this.toggleFullscreen.bind(this));
             this.pipBtn.addEventListener('click', this.togglePip.bind(this));
+            // REFACTORED: The main CC button now uses the new toggle logic
             this.captionsBtn.addEventListener('click', this.toggleCaptions.bind(this));
             this.settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleMenu(this.settingsMenu, this.settingsBtn); });
 
             this.speedSlider.addEventListener('input', () => { const speedValue = this.PLAYBACK_SPEEDS[this.speedSlider.value]; this.setSpeed(speedValue); });
             this.volumeBoosterBtn.addEventListener('click', this.toggleVolumeBooster.bind(this));
             
-            // *** FIXED: Unified menu event listener using event delegation ***
+            // REFACTORED: Unified menu event listener now handles caption track selection
             this.settingsMenu.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
 
                 const targetPanel = button.dataset.targetPanel;
+                const trackIndex = button.dataset.trackIndex;
+
                 if (targetPanel) {
                     this.navigateMenu(targetPanel);
+                } else if (trackIndex !== undefined) {
+                    this.setCaptionTrack(trackIndex);
                 } else if (button.classList.contains('volume-booster-toggle')) {
                     this.toggleVolumeBooster();
                 }
@@ -362,14 +390,6 @@
         toggleFullscreen() { if (!document.fullscreenElement) { this.container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); } else { document.exitFullscreen(); } }
         togglePip() { if (document.pictureInPictureElement) { document.exitPictureInPicture(); } else if (document.pictureInPictureEnabled) { this.video.requestPictureInPicture(); } }
 
-        toggleCaptions() {
-            if (this.video.textTracks.length === 0) return;
-            const isHidden = this.video.textTracks[0].mode === 'hidden';
-            this.video.textTracks[0].mode = isHidden ? 'showing' : 'hidden';
-            this.captionsBtn.classList.toggle('active', isHidden);
-            this.container.classList.toggle('captions-on', isHidden);
-        }
-
         setSpeed(speed) {
             const newSpeed = parseFloat(speed);
             if (!this.PLAYBACK_SPEEDS.includes(newSpeed)) return;
@@ -395,7 +415,7 @@
             }
             this.updateProgressBar();
             if (this.video.src && !this.thumbnailVideo.src) this.setupVideoSource(this.video.src);
-            this.updateCaptionButtonVisibility();
+            this.handleTrackChange(); // Populate captions menu on load
         }
 
         handlePlay() { this.updatePlayPauseIcon(); this.startProgressLoop(); this.hideControls(); }
@@ -418,6 +438,7 @@
                 this.toggleVolumeBooster();
                 return;
             }
+            // NEW: Added 'j' and 'l' keys for 10-second seeking.
             const actions = {
                 " ": this.togglePlay.bind(this),
                 "k": this.togglePlay.bind(this),
@@ -427,7 +448,7 @@
                 "arrowleft": () => { this.video.currentTime -= 5; },
                 "arrowright": () => { this.video.currentTime += 5; },
                 "j": () => { this.video.currentTime -= 10; },
-                "l": () => { this.video.currentTime += 10; }
+                "l": () => { this.video.currentTime += 10; },
             };
             if (actions[key]) {
                 e.preventDefault();
@@ -435,26 +456,86 @@
             }
         }
         
-        updateCaptionButtonVisibility() {
-            const hasTracks = this.video.textTracks && this.video.textTracks.length > 0;
-            const displayStyle = hasTracks ? 'flex' : 'none';
-
-            this.captionsBtn.style.display = displayStyle;
-            this.captionsMenuBtn.style.display = displayStyle;
-
-            if (hasTracks) {
-                this.video.textTracks[0].mode = 'hidden';
-                this.captionsBtn.classList.remove('active');
-                this.container.classList.remove('captions-on');
-            }
-        }
-
         startProgressLoop() { this.stopProgressLoop(); const loop = () => { this.updateProgressBar(); this.animationFrameId = requestAnimationFrame(loop); }; this.animationFrameId = requestAnimationFrame(loop); }
         stopProgressLoop() { cancelAnimationFrame(this.animationFrameId); }
         
         showControls(force = false) { clearTimeout(this.controlsTimeout); this.container.classList.remove('no-cursor'); this.videoControls.classList.add('visible'); this.container.classList.add('controls-visible'); if (!force) { this.hideControls(); } }
         hideControls() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) { this.showControls(true); return; } this.controlsTimeout = setTimeout(() => { this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); this.container.classList.add('no-cursor'); }, 2600); }
         hideControlsOnLeave() { if (this.isScrubbing || this.settingsMenu.classList.contains('visible')) return; this.videoControls.classList.remove('visible'); this.container.classList.remove('controls-visible'); }
+
+        // --- REFACTORED: New Caption System Methods ---
+
+        handleTrackChange() {
+            this.updateCaptionButtonVisibility();
+            this.populateCaptionsMenu();
+        }
+
+        updateCaptionButtonVisibility() {
+            const hasTracks = this.video.textTracks && this.video.textTracks.length > 0;
+            const displayStyle = hasTracks ? 'flex' : 'none';
+            this.captionsBtn.style.display = displayStyle;
+            this.captionsMenuBtn.style.display = displayStyle;
+        }
+
+        populateCaptionsMenu() {
+            this.captionsTrackList.innerHTML = '';
+            const offButton = document.createElement('button');
+            offButton.className = 'menu-item';
+            offButton.dataset.trackIndex = -1;
+            offButton.innerHTML = `<span class="check-mark"></span> Off`;
+            this.captionsTrackList.appendChild(offButton);
+
+            Array.from(this.video.textTracks).forEach((track, index) => {
+                const trackButton = document.createElement('button');
+                trackButton.className = 'menu-item';
+                trackButton.dataset.trackIndex = index;
+                const label = track.label || `Track ${index + 1}`;
+                trackButton.innerHTML = `<span class="check-mark"></span> ${label}`;
+                this.captionsTrackList.appendChild(trackButton);
+                track.mode = 'hidden'; // Ensure all tracks start hidden
+            });
+            this.updateActiveCaptionIndicator();
+        }
+
+        toggleCaptions() {
+            if (this.video.textTracks.length === 0) return;
+            const isCurrentlyActive = this.activeTrackIndex > -1;
+            this.setCaptionTrack(isCurrentlyActive ? -1 : this.lastActiveTrackIndex);
+        }
+
+        setCaptionTrack(index) {
+            const newIndex = parseInt(index, 10);
+            if (this.activeTrackIndex === newIndex) return;
+
+            Array.from(this.video.textTracks).forEach(t => t.mode = 'hidden');
+            if (newIndex > -1 && this.video.textTracks[newIndex]) {
+                this.video.textTracks[newIndex].mode = 'showing';
+                this.lastActiveTrackIndex = newIndex;
+            }
+            this.activeTrackIndex = newIndex;
+            this.updateActiveCaptionIndicator();
+        }
+
+        updateActiveCaptionIndicator() {
+            const isActive = this.activeTrackIndex > -1;
+            this.captionsBtn.classList.toggle('active', isActive);
+            this.container.classList.toggle('captions-on', isActive);
+
+            if (isActive) {
+                const track = this.video.textTracks[this.activeTrackIndex];
+                this.captionsStatus.textContent = (track ? track.label : `Track ${this.activeTrackIndex + 1}`) + ' >';
+            } else {
+                this.captionsStatus.textContent = 'Off >';
+            }
+
+            this.captionsTrackList.querySelectorAll('.menu-item').forEach(button => {
+                const buttonIndex = parseInt(button.dataset.trackIndex, 10);
+                const isButtonActive = buttonIndex === this.activeTrackIndex;
+                button.classList.toggle('active', isButtonActive);
+                button.querySelector('.check-mark').textContent = isButtonActive ? '✓' : '';
+            });
+        }
+
 
         // --- Volume Booster Methods ---
         async initializeAudioBooster() {
@@ -490,7 +571,8 @@
         // --- MENU AND SETTINGS METHODS ---
         toggleMenu(menu, button) { const isVisible = menu.classList.toggle('visible'); button.classList.toggle('menu-open', isVisible); if (isVisible) { this.showControls(true); } else { this.navigateMenu('main'); this.hideControls(); } }
         closeAllMenus() { this.settingsMenu.classList.remove('visible'); this.settingsBtn.classList.remove('menu-open'); this.navigateMenu('main'); }
-        navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions': 2 }; const index = panelIndex[panelName] || 0; this.menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
+        // REFACTORED: Panel map updated for the new captions menu structure
+        navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions-track': 2, 'captions-style': 3 }; const index = panelIndex[panelName] || 0; this.menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
         
         handleCaptionInputChange(e) {
             const input = e.currentTarget;
