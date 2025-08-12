@@ -71,7 +71,7 @@ Here is a complete, working example. This example includes multiple caption trac
         >
           <!-- The player will automatically detect all tracks and build the captions menu -->
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
-          <track kind="captions" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="Español" />
+          <track kind="captions" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captionses.vtt" label="Español" />
         </video>
     </div>
 
