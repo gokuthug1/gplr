@@ -65,7 +65,7 @@ This complete example includes multiple caption tracks to demonstrate the player
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v1.8.4</title>
+    <title>GokuPlr v1.8.6</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
