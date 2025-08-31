@@ -103,7 +103,7 @@ This complete example includes multiple caption tracks to demonstrate the player
     </div>
 
     <!-- The 'defer' attribute ensures the script runs after the document is parsed -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.4/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.5/plr.js" defer></script>
 
 </body>
 </html>
