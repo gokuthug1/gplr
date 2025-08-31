@@ -106,7 +106,7 @@ This complete example includes multiple caption tracks to demonstrate the player
 
 </body>
 </html>
-
+```
 ---
 
 ## Keyboard Shortcuts
