@@ -1,7 +1,6 @@
 # GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.net/v1/package/gh/gokuthug1/gplr/badge?)
-
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?)
 GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful and feature-rich player. It's designed for easy integration, high performance, and extensive customization.
 
 ---
