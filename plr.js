@@ -1,7 +1,11 @@
 /**
- * GokuPlr v1.8.5 (Legit jus change the settings SVG)
+ * GokuPlr v1.8.6
  * A script to transform standard HTML5 video elements into a custom-styled player.
  * To use, include this script and add the class "cvp" to your <video> tags.
+ *
+ * Changelog v1.8.5:
+ * - FIX: Corrected a bug in the settings loader that prevented caption background opacity from being restored correctly.
+ * - REFINED: Updated the settings button SVG icon for a cleaner look.
  *
  * Changelog v1.8.4:
  * - REFACTOR: Complete rewrite for enhanced readability, maintainability, and performance.
@@ -205,7 +209,7 @@
                         <div class="controls-right">
                             <button class="control-button volume-booster-btn" aria-label="Toggle Volume Booster (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg></button>
                             <div class="settings-menu">
-                                <button class="control-button settings-btn" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg></button>
+                                <button class="control-button settings-btn" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M19.4 12.9C19.5 12.6 19.5 12.3 19.5 12S19.5 11.4 19.4 11.1L21 9.9C21.2 9.7 21.2 9.4 21.1 9.2L19.3 6.3C19.2 6.1 18.9 6 18.7 6.1L16.9 6.8C16.4 6.4 15.9 6.1 15.4 5.9L15.1 4C15.1 3.8 14.8 3.5 14.5 3.5H9.5C9.2 3.5 8.9 3.8 8.9 4L8.6 5.9C8.1 6.1 7.6 6.4 7.1 6.8L5.3 6.1C5.1 6 4.8 6.1 4.7 6.3L2.9 9.2C2.8 9.4 2.8 9.7 3 9.9L4.6 11.1C4.5 11.4 4.5 11.7 4.5 12S4.5 12.6 4.6 12.9L3 14.1C2.8 14.3 2.8 14.6 2.9 14.8L4.7 17.7C4.8 17.9 5.1 18 5.3 17.9L7.1 17.2C7.6 17.6 8.1 17.9 8.6 18.1L8.9 20C8.9 20.2 9.2 20.5 9.5 20.5H14.5C14.8 20.5 15.1 20.2 15.1 20L15.4 18.1C15.9 17.9 16.4 17.6 16.9 17.2L18.7 17.9C18.9 18 19.2 17.9 19.3 17.7L21.1 14.8C21.2 14.6 21.2 14.3 21 14.1L19.4 12.9ZM12 15.5C10.1 15.5 8.5 13.9 8.5 12C8.5 10.1 10.1 8.5 12 8.5C13.9 8.5 15.5 10.1 15.5 12C15.5 13.9 13.9 15.5 12 15.5Z"></path></svg></button>
                                 <div class="menu-content">
                                     <div class="menu-panels-wrapper">
                                         <div class="menu-panel main-panel">
@@ -660,11 +664,11 @@
             const setting = input.dataset.setting;
             let value;
             if (input.id === 'caption-bg-color') {
-                const opacity = parseInt(D('#caption-bg-opacity').value, 10) / 100;
+                const opacity = parseInt(this.#container.querySelector('#caption-bg-opacity').value, 10) / 100;
                 value = this.#hexToRgba(input.value, opacity);
             } else if (input.id === 'caption-bg-opacity') {
                 const opacity = parseInt(input.value, 10) / 100;
-                value = this.#hexToRgba(D('#caption-bg-color').value, opacity);
+                value = this.#hexToRgba(this.#container.querySelector('#caption-bg-color').value, opacity);
             } else {
                 value = input.value + (input.dataset.unit || '');
             }
@@ -696,12 +700,12 @@
                 if (!value) return;
                 if (input.dataset.isOpacity) {
                     const rgbaMatch = value.match(/rgba?\(.+,\s*([\d.]+)\)/);
-                    if (rgbaMatch) input.value = Math.round(parseFloat(rgbaMatch[4]) * 100);
+                    if (rgbaMatch) input.value = Math.round(parseFloat(rgbaMatch[1]) * 100);
                 } else if (input.type === 'color' && value.startsWith('rgba')) {
                     const [r, g, b] = value.match(/\d+/g);
                     input.value = `#${[r,g,b].map(c => parseInt(c).toString(16).padStart(2, '0')).join('')}`;
                 } else {
-                    input.value = value.replace('px', '');
+                    input.value = value.replace(/px$/, '');
                 }
             });
         }
