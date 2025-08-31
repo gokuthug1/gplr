@@ -8,7 +8,7 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ## Table of Contents
 
-- [Changelog (v1.8.4)](#changelog-v183)
+- [Changelog (v1.8.4)](#changelog-v184)
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
