@@ -75,7 +75,7 @@ Here is a complete, working example. This example includes multiple caption trac
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.2/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.3/plr.js" defer></script>
 
 </body>
 </html>
