@@ -1,26 +1,53 @@
-# GokuPlr - A Custom HTML5 Video Player
+# GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?)
-A lightweight, modern, and skinnable HTML5 video player that can be added to any website with a single line of code. This project transforms standard `<video>` elements into a beautiful, feature-rich player with a clean, responsive UI and no external dependencies.
+![jsDelivr](https://data.jsdelivr.net/v1/package/gh/gokuthug1/gplr/badge?style=flat&color=00a8ff)
+
+GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful and feature-rich player. It's designed for easy integration, high performance, and extensive customization.
+
+---
+
+## Table of Contents
+
+- [Changelog (v1.8.4)](#changelog-v183)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Theming with CSS Variables](#theming-with-css-variables)
+- [License](#license)
+
+---
+
+## Changelog (v1.8.4)
+
+This version includes a major internal refactor to improve performance, maintainability, and user experience.
+
+- **Complete Code Refactor:** Modernized with ES6+ classes, private fields, and best practices.
+- **Reworked Settings Menu:** A cleaner, more intuitive multi-panel design for easier navigation.
+- **Refined Controls:** Control visibility logic now correctly handles mouse, keyboard, and click interactions.
+- **Improved Performance:** More efficient event handling for smoother scrubbing and volume control.
+- **New Shortcut:** Press `C` to quickly toggle captions on or off.
 
 ---
 
 ## Features
 
-- **Modern, Auto-Hiding UI:** Clean controls that disappear during playback for an unobstructed view.
-- **Professional Captions Menu:** Automatically detects and lists multiple language tracks (e.g., English, Spanish). The UI clearly separates track selection from style customization.
-- **Volume Booster:** Use the Web Audio API to boost volume up to 200%, accessible via an icon, the settings menu, or a keyboard shortcut.
-- **Advanced Settings Menu:**
-    - Playback speed control (0.5x to 2x).
-    - Customize caption appearance: font, size, color, background, and opacity.
-    - Customize the player's primary accent color.
-    - Settings are saved locally to persist across sessions.
-- **Thumbnail Previews:** See a video preview when hovering over the progress bar.
-- **Full Keyboard Control:** Comprehensive shortcuts for play/pause, volume, seeking, fullscreen, and more.
-- **Picture-in-Picture & Fullscreen:** Native browser support for both modes.
-- **Responsive & Lightweight:** Looks great on all screen sizes with no external dependencies.
-- **Simple Integration:** Add to your site with a single script tag and a CSS class.
-- **Download Button:** An optional link to download the video source file.
+- **Sleek, Auto-Hiding UI:** A clean, modern interface that gets out of the way during playback for an immersive viewing experience.
+- **Advanced Captions Support:**
+    - Automatically detects and lists multiple language tracks.
+    - An intuitive menu separates track selection from style customization.
+    - Customize font, size, color, background, and opacity.
+- **Persistent Customization:**
+    - Control playback speed (0.5x to 2x).
+    - Customize the player's primary accent color and caption styles.
+    - All settings are saved in `localStorage` to persist across sessions.
+- **Volume Booster:** Utilizes the Web Audio API to boost volume up to 200%, accessible via a control button or `Ctrl`+`Z`.
+- **Thumbnail Previews on Scrub:** See a video frame preview when hovering over the progress bar.
+- **Comprehensive Keyboard Shortcuts:** Full control over playback, volume, seeking, fullscreen, and more.
+- **Modern & Maintainable Codebase:** Written in modern ES6+ JavaScript with no external dependencies.
+- **Native Browser Features:** Full support for Picture-in-Picture and Fullscreen modes.
+- **Responsive & Lightweight:** Looks great on all screen sizes.
+- **Simple Integration:** Add it to your site with a single script tag and a CSS class.
+- **Direct Download Button:** A convenient button to download the video source file.
 
 ---
 
@@ -30,7 +57,7 @@ To use GokuPlr, add the `cvp` class to your `<video>` tag and include the script
 
 ### Full Page Example (`index.html`)
 
-Here is a complete, working example. This example includes multiple caption tracks to showcase the new captions menu. You can copy this code into an `index.html` file and open it in your browser to see the player in action.
+This complete example includes multiple caption tracks to demonstrate the player's capabilities. Copy this code into an `index.html` file and open it in your browser.
 
 ```html
 <!DOCTYPE html>
@@ -38,7 +65,7 @@ Here is a complete, working example. This example includes multiple caption trac
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr Example</title>
+    <title>GokuPlr v1.8.4</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -55,7 +82,7 @@ Here is a complete, working example. This example includes multiple caption trac
             max-width: 900px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
         }
     </style>
@@ -75,31 +102,32 @@ Here is a complete, working example. This example includes multiple caption trac
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.3/plr.js" defer></script>
+    <!-- The 'defer' attribute ensures the script runs after the document is parsed -->
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v1.8.4/plr.js" defer></script>
 
 </body>
 </html>
-```
 
-### Keyboard Shortcuts
+---
 
-| **Key** | **Action** |
+## Keyboard Shortcuts
+
+| Key | Action |
 | :--- | :--- |
 | `Space` or `K` | Toggle Play/Pause |
 | `M` | Toggle Mute/Unmute |
 | `F` | Toggle Fullscreen |
 | `P` | Toggle Picture-in-Picture |
-| `L` | Seek Forward 10 seconds |
-| `→` (Right Arrow) | Seek Forward 5 seconds |
-| `J` | Seek Backward 10 seconds |
-| `←` (Left Arrow) | Seek Backward 5 seconds |
+| `C` | Toggle Captions |
+| `L` or `→` | Seek Forward 10s / 5s |
+| `J` or `←` | Seek Backward 10s / 5s |
 | `Ctrl` + `Z` | Toggle Volume Booster |
 
 ---
 
-## Customization & Theming
+## Theming with CSS Variables
 
-Set default styles by overriding CSS Custom Properties in your own stylesheet. While users can change these in the settings menu, this defines your site's base theme.
+You can easily set a default theme for the player by overriding CSS Custom Properties in your own stylesheet. While users can change these in the settings menu, this defines your site's base look.
 
 ```css
 /* Example: A red and dark theme with sharp corners */
@@ -108,16 +136,19 @@ Set default styles by overriding CSS Custom Properties in your own stylesheet. W
   --controls-bg: rgba(15, 15, 15, 0.9);
   --border-radius: 4px;
 }
-```
 
-### Available Variables:
-- `--primary-color`
-- `--text-color`
-- `--controls-bg`
-- `--menu-bg`
-- `--progress-bar-bg`
-- `--border-radius`
-- `--caption-font-family`, `--caption-font-size`, `--caption-font-color`, `--caption-bg-color`
+### Available Variables
+
+-   `--primary-color`
+-   `--text-color`
+-   `--controls-bg`
+-   `--menu-bg`
+-   `--progress-bar-bg`
+-   `--border-radius`
+-   `--caption-font-family`
+-   `--caption-font-size`
+-   `--caption-font-color`
+-   `--caption-bg-color`
 
 ---
 
