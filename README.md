@@ -135,7 +135,7 @@ You can easily set a default theme for the player by overriding CSS Custom Prope
   --controls-bg: rgba(15, 15, 15, 0.9);
   --border-radius: 4px;
 }
-
+```
 ### Available Variables
 
 -   `--primary-color`
