@@ -1,45 +1,37 @@
 /**
- * GokuPlr v1.8.7
- * A script to transform standard HTML5 video elements into a custom-styled player.
- * To use, include this script and add the class "cvp" to your <video> tags.
+ * GokuPlr v2.0.0
+ * A modern, feature-rich, and customizable HTML5 video player.
  *
- * Changelog v1.8.6:
- * - Merely setting SVG change.
- *
- * Changelog v1.8.5:
- * - FIX: Corrected a bug in the settings loader that prevented caption background opacity from being restored correctly.
- * - REFINED: Updated the settings button SVG icon for a cleaner look.
- *
- * Changelog v1.8.4:
- * - REFACTOR: Complete rewrite for enhanced readability, maintainability, and performance.
- * - MODERNIZED: Adopted modern JavaScript (ES6+ classes, private fields) and CSS (Flexbox/Grid layouts).
- * - REWORKED: Settings menu UI has been completely redesigned for a cleaner look and more intuitive navigation.
- * - REFINED: Video control visibility logic is now more robust and aligns with standard player behavior,
- *   correctly handling mouse, keyboard (space, 'k'), and click interactions for play/pause.
- * - ENHANCED: Event listeners for scrubbing and volume control are now managed more efficiently,
- *   only active during drag operations.
- * - IMPROVED: Keyboard navigation and accessibility have been enhanced with better focus management.
+ * Refactored and updated for better readability, maintainability, and new features.
+ * - Added Video Quality Selection UI (detects <source> tags).
+ * - Added keyboard shortcuts for speed control (< >) and quick seeking (0-9).
+ * - Improved code structure and organization.
+ * - Enhanced UI feedback for volume booster and download actions.
  */
 
 (function() {
     // This wrapper prevents our code from interfering with other scripts on the page.
 
     // Check if the script has already been run to avoid re-initializing.
-    if (window.customPlayerInitialized) {
+    if (window.GokuPlrInitialized) {
         return;
     }
-    window.customPlayerInitialized = true;
-
-    const PLAYER_SETTINGS_KEY = 'gplr-settings';
-    const PLAYER_SPEED_KEY = 'gplr-speed';
+    window.GokuPlrInitialized = true;
 
     class CustomVideoPlayer {
-        // Share a single AudioContext across all player instances for efficiency.
-        static #audioContext = null;
+        // --- Static Properties ---
+        static #version = '2.0.0';
+        static #PLAYER_SETTINGS_KEY = 'gplr-settings';
+        static #PLAYER_SPEED_KEY = 'gplr-speed';
+        static #audioContext = null; // Shared AudioContext for efficiency.
 
-        // Private fields for internal state and DOM elements
+        // --- Private Instance Fields ---
+
+        // Core Elements
         #video;
         #container;
+
+        // State Management
         #controlsTimeout = null;
         #animationFrameId = null;
         #isScrubbing = false;
@@ -57,14 +49,15 @@
         #PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
         #BOOSTER_LEVEL = 2; // 200% volume
 
-        // DOM elements
+        // DOM Element Cache
         #thumbnailVideo; #thumbnailCanvas; #thumbnailCtx; #playPauseBtn; #bigPlayBtn;
         #muteBtn; #volumeSlider; #volumeFilled; #volumeThumb; #progressBarContainer;
-        #progressBarFilled; #currentTimeEl; #totalTimeEl; #fullscreenBtn;
-        #captionsBtn; #pipBtn; #downloadBtn; #seekTooltip; #tooltipTime;
-        #videoControls; #settingsBtn; #settingsMenu; #menuPanelsWrapper;
-        #speedSlider; #speedDisplay; #speedPanelDisplay; #volumeBoosterBtn; #boosterStatus;
-        #captionsMenuBtn; #captionsStatus; #captionsTrackList; #captionSettingInputs;
+        #progressBarFilled; #fullscreenBtn; #captionsBtn; #pipBtn; #downloadBtn;
+        #seekTooltip; #tooltipTime; #currentTimeEl; #totalTimeEl; #videoControls;
+        #settingsBtn; #settingsMenu; #menuPanelsWrapper; #speedSlider; #speedDisplay;
+        #speedPanelDisplay; #volumeBoosterBtn; #boosterStatus; #captionsMenuBtn;
+        #captionsStatus; #captionsTrackList; #captionSettingInputs;
+        #qualityMenuBtn; #qualityStatus; #qualityMenuList;
 
         // Bound event handlers for dynamic attachment/detachment
         #boundHandleScrubbing;
@@ -78,7 +71,7 @@
             }
             this.#video = videoElement;
             this.#video.dataset.customPlayerInitialized = 'true';
-            this.#video.controls = false;
+            this.#video.controls = false; // Disable native controls
 
             this.#injectStyles();
             this.#buildPlayerHtml();
@@ -88,24 +81,32 @@
             this.#attachEventListeners();
         }
 
+        // --- 1. Initialization and Setup ---
+
         #injectStyles() {
-            const styleId = 'custom-video-player-styles';
+            const styleId = 'goku-player-styles';
             if (document.getElementById(styleId)) return;
 
             const style = document.createElement('style');
             style.id = styleId;
             style.textContent = `
+                /* --- Base & Variables --- */
                 :root { --primary-color: #00a8ff; --text-color: #ffffff; --controls-bg: rgba(20, 20, 20, 0.85); --menu-bg: rgba(30, 30, 30, 0.95); --progress-bar-bg: rgba(255, 255, 255, 0.3); --tooltip-bg: rgba(0, 0, 0, 0.85); --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --border-radius: 8px; --transition-speed: 0.2s; }
                 .video-player-container { --caption-font-size: 22px; --caption-font-color: #ffffff; --caption-bg-color: rgba(0, 0, 0, 0.75); --caption-font-family: 'Arial', sans-serif; }
+                
+                /* --- Layout & Container --- */
                 .video-player-container, .video-player-container * { box-sizing: border-box; }
                 .video-player-container:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-                .time-display, .tooltip-time { user-select: none; }
                 .video-player-container { position: relative; width: 100%; background-color: #000; border-radius: var(--border-radius); overflow: hidden; font-family: var(--font-family); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; aspect-ratio: 16 / 9; }
                 .video-player-container.no-cursor { cursor: none; }
                 .video-player-container.fullscreen { width: 100%; height: 100%; border-radius: 0; aspect-ratio: auto; }
                 .video-player-container video { width: 100%; height: 100%; display: block; }
+                
+                /* --- Captions --- */
                 .video-player-container video::cue { background-color: var(--caption-bg-color); color: var(--caption-font-color); font-size: var(--caption-font-size); font-family: var(--caption-font-family); transition: bottom var(--transition-speed) ease-in-out; bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
                 .video-player-container.controls-visible.captions-on video::cue { bottom: 85px; }
+                
+                /* --- Controls --- */
                 .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); opacity: 0; visibility: hidden; transition: opacity var(--transition-speed), visibility var(--transition-speed); z-index: 2; }
                 .video-player-container .video-controls.visible { opacity: 1; visibility: visible; }
                 .controls-bottom { display: flex; align-items: center; gap: 12px; }
@@ -115,17 +116,20 @@
                 .control-button svg { width: 22px; height: 22px; fill: var(--text-color); pointer-events: none; transition: fill var(--transition-speed); }
                 .control-button:hover { background: rgba(255, 255, 255, 0.2); }
                 .control-button.disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
-                .control-button.active svg, .control-button.menu-open svg { fill: var(--primary-color); }
-                .play-pause-btn .pause-icon { display: none; }
-                .video-player-container.playing .play-pause-btn .play-icon { display: none; }
+                .control-button.active svg, .control-button.menu-open svg, .volume-booster-btn.active svg { fill: var(--primary-color); }
+                
+                /* --- State-dependent Icons --- */
+                .play-pause-btn .pause-icon, .video-player-container.playing .play-pause-btn .play-icon { display: none; }
                 .video-player-container.playing .play-pause-btn .pause-icon { display: block; }
                 .mute-btn .volume-high-icon, .mute-btn .volume-medium-icon, .mute-btn .volume-low-icon, .mute-btn .muted-icon { display: none; }
                 .video-player-container.volume-high:not(.muted) .mute-btn .volume-high-icon { display: block; }
                 .video-player-container.volume-medium:not(.muted) .mute-btn .volume-medium-icon { display: block; }
                 .video-player-container.volume-low:not(.muted) .mute-btn .volume-low-icon { display: block; }
                 .video-player-container.muted .mute-btn .muted-icon { display: block; }
-                .fullscreen-btn .enter-fs-icon, .video-player-container.fullscreen .fullscreen-btn .exit-fs-icon { display: block; }
                 .fullscreen-btn .exit-fs-icon, .video-player-container.fullscreen .fullscreen-btn .enter-fs-icon { display: none; }
+                .fullscreen-btn .enter-fs-icon, .video-player-container.fullscreen .fullscreen-btn .exit-fs-icon { display: block; }
+                
+                /* --- Progress Bar & Tooltip --- */
                 .progress-bar-container { width: 100%; height: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px; }
                 .progress-bar { width: 100%; height: 5px; background: var(--progress-bar-bg); border-radius: 10px; position: relative; transition: height var(--transition-speed); }
                 .progress-bar-filled { height: 100%; background: var(--primary-color); border-radius: 10px; width: 0%; position: relative; }
@@ -134,27 +138,32 @@
                 .progress-bar-container:hover .progress-bar { height: 8px; }
                 .seek-tooltip { position: absolute; bottom: 35px; left: 0; background: var(--tooltip-bg); border: 1px solid rgba(255, 255, 255, 0.2); padding: 5px; border-radius: var(--border-radius); display: none; transform: translateX(-50%); text-align: center; color: var(--text-color); font-size: 12px; z-index: 3; }
                 .seek-tooltip canvas { width: 160px; height: 90px; border-radius: 4px; margin-bottom: 4px; }
+                .tooltip-time { user-select: none; }
+
+                /* --- Volume Slider --- */
                 .volume-container { display: flex; align-items: center; }
                 .volume-slider { width: 0; height: 5px; background: var(--progress-bar-bg); border-radius: 10px; cursor: pointer; position: relative; transition: width var(--transition-speed) ease-in-out, opacity var(--transition-speed); margin-left: -10px; opacity: 0; }
                 .volume-container:hover .volume-slider { width: 80px; margin-left: 5px; opacity: 1; }
                 .volume-filled { height: 100%; background: var(--text-color); border-radius: 10px; width: 100%; position: relative; }
                 .volume-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--text-color); position: absolute; top: 50%; transform: translateY(-50%); left: 100%; margin-left: -6px; opacity: 0; transition: opacity var(--transition-speed); pointer-events: none; }
                 .volume-container:hover .volume-thumb { opacity: 1; }
-                .time-display { color: var(--text-color); font-size: 14px; font-variant-numeric: tabular-nums; }
+                .time-display { color: var(--text-color); font-size: 14px; font-variant-numeric: tabular-nums; user-select: none; }
+                
+                /* --- Big Play Button --- */
                 .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 1; padding: 0; }
                 .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); }
                 .big-play-button:hover svg { fill: var(--primary-color); }
                 .big-play-button svg { width: 80px; height: 80px; fill: var(--text-color); transition: fill var(--transition-speed); }
                 .video-player-container.playing .big-play-button { opacity: 0; pointer-events: none; }
 
-                /* --- REWORKED: Settings Menu --- */
+                /* --- Settings Menu --- */
                 .settings-menu { position: relative; }
                 .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
                 .menu-panel { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
                 .menu-header { display: flex; align-items: center; padding: 8px 4px 8px 8px; font-size: 15px; font-weight: 500; color: #eee; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-                .menu-header span { flex-grow: 1; text-align: center; margin-right: 36px; /* Balance the back button */ }
+                .menu-header span { flex-grow: 1; text-align: center; margin-right: 36px; }
                 .menu-back-btn { background: none; border: none; color: #eee; cursor: pointer; padding: 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
                 .menu-back-btn:hover { background: rgba(255, 255, 255, 0.1); }
                 .menu-back-btn svg { width: 24px; height: 24px; fill: currentColor; }
@@ -164,21 +173,27 @@
                 .menu-item-value { color: #aaa; font-size: 14px; }
                 .menu-item-value svg { width: 16px; height: 16px; fill: #aaa; margin-left: 4px; }
                 .menu-separator { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 8px; }
-                .captions-track-list .menu-item.active { background-color: rgba(0, 168, 255, 0.15); }
-                .captions-track-list .menu-item .check-mark { width: 20px; display: inline-block; text-align: left; font-weight: bold; color: var(--primary-color); opacity: 0; margin-right: 5px; }
-                .captions-track-list .menu-item.active .check-mark { opacity: 1; }
-                .captions-track-list .menu-item { justify-content: flex-start; }
+                .menu-list .menu-item.active { background-color: rgba(0, 168, 255, 0.15); }
+                .menu-list .menu-item .check-mark { width: 20px; display: inline-block; text-align: left; font-weight: bold; color: var(--primary-color); opacity: 0; margin-right: 5px; }
+                .menu-list .menu-item.active .check-mark { opacity: 1; }
+                .menu-list .menu-item { justify-content: flex-start; }
                 .speed-slider-container { padding: 12px 4px; display: flex; align-items: center; gap: 12px; }
                 .speed-slider-container .speed-panel-display { color: #ccc; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 45px; text-align: right; }
+
+                /* --- Caption Settings Panel --- */
                 .caption-settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 12px 15px; align-items: center; padding: 8px 4px; font-size: 14px; color: #eee; }
                 .caption-settings-grid label { white-space: nowrap; justify-self: end; }
                 .caption-settings-grid input[type="color"] { width: 28px; height: 28px; border: 1px solid #555; border-radius: 4px; padding: 2px; background: none; cursor: pointer; justify-self: start; }
                 .caption-settings-grid select { width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 6px; font-size: 14px; }
                 .caption-settings-grid .slider-container { display: flex; align-items: center; gap: 8px; width: 100%; }
+                
+                /* --- Shared Slider Styles --- */
                 input[type=range].goku-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; background: var(--progress-bar-bg); border-radius: 5px; outline: none; cursor: pointer; }
                 input[type=range].goku-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; margin-top: -5px; transition: background var(--transition-speed); }
                 input[type=range].goku-slider:hover::-webkit-slider-thumb, input[type=range].goku-slider:focus::-webkit-slider-thumb { background: var(--primary-color); }
                 .control-button:focus-visible, .settings-menu button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 4px; }
+                
+                /* --- Responsive --- */
                 @media (max-width: 600px) { .volume-container:hover .volume-slider { width: 50px; } .time-display { font-size: 12px; } .control-button svg { width: 20px; height: 20px; } .controls-bottom, .controls-left, .controls-right { gap: 6px; } .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } }
             `;
             document.head.appendChild(style);
@@ -215,38 +230,34 @@
                                 <button class="control-button settings-btn" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg></button>
                                 <div class="menu-content">
                                     <div class="menu-panels-wrapper">
+                                        <!-- Panel 0: Main -->
                                         <div class="menu-panel main-panel">
                                             <div class="menu-panel-content">
                                                 <button class="menu-item volume-booster-toggle"><span>Volume Booster</span><span class="menu-item-value booster-status">Off</span></button>
+                                                <button class="menu-item quality-menu-btn" data-target-panel="quality"><span>Quality</span><span class="menu-item-value quality-status">Auto <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></span></button>
                                                 <button class="menu-item" data-target-panel="speed"><span>Playback Speed</span><span class="menu-item-value speed-display">1.0×</span></button>
                                                 <button class="menu-item captions-menu-btn" data-target-panel="captions-track"><span>Captions</span><span class="menu-item-value captions-status">Off <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></span></button>
                                             </div>
                                         </div>
+                                        <!-- Panel 1: Speed -->
                                         <div class="menu-panel speed-panel">
                                             <div class="menu-header"><button class="menu-back-btn" data-target-panel="main"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button><span>Playback Speed</span></div>
-                                            <div class="menu-panel-content">
-                                                <div class="speed-slider-container"><input type="range" class="goku-slider speed-slider" min="0" max="5" value="2" step="1"><span class="speed-panel-display">1.0×</span></div>
-                                            </div>
+                                            <div class="menu-panel-content"><div class="speed-slider-container"><input type="range" class="goku-slider speed-slider" min="0" max="5" value="2" step="1"><span class="speed-panel-display">1.0×</span></div></div>
                                         </div>
+                                        <!-- Panel 2: Captions Track -->
                                         <div class="menu-panel captions-track-panel">
                                             <div class="menu-header"><button class="menu-back-btn" data-target-panel="main"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button><span>Captions</span></div>
-                                            <div class="menu-panel-content">
-                                                <div class="captions-track-list"></div><div class="menu-separator"></div>
-                                                <button class="menu-item" data-target-panel="captions-style"><span>Options</span><span class="menu-item-value"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></span></button>
-                                            </div>
+                                            <div class="menu-panel-content"><div class="captions-track-list menu-list"></div><div class="menu-separator"></div><button class="menu-item" data-target-panel="captions-style"><span>Options</span><span class="menu-item-value"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></span></button></div>
                                         </div>
+                                        <!-- Panel 3: Caption Style -->
                                         <div class="menu-panel captions-style-panel">
                                             <div class="menu-header"><button class="menu-back-btn" data-target-panel="captions-track"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button><span>Caption Options</span></div>
-                                            <div class="menu-panel-content">
-                                                <div class="caption-settings-grid">
-                                                    <label for="accent-color">Accent</label><input type="color" id="accent-color" class="caption-setting-input" data-setting="primary-color">
-                                                    <label for="caption-font">Font</label><select id="caption-font" class="caption-setting-input" data-setting="caption-font-family"><option>Arial</option><option>Verdana</option><option>Helvetica</option><option>Times New Roman</option><option>Courier New</option><option>Georgia</option></select>
-                                                    <label for="caption-font-size">Font Size</label><div class="slider-container"><input type="range" id="caption-font-size" class="goku-slider caption-setting-input" min="14" max="36" step="1" data-setting="caption-font-size" data-unit="px"></div>
-                                                    <label for="caption-font-color">Font Color</label><input type="color" id="caption-font-color" class="caption-setting-input" data-setting="caption-font-color">
-                                                    <label for="caption-bg-color">BG Color</label><input type="color" id="caption-bg-color" class="caption-setting-input" data-setting="caption-bg-color" data-opacity-input="caption-bg-opacity">
-                                                    <label for="caption-bg-opacity">BG Opacity</label><div class="slider-container"><input type="range" id="caption-bg-opacity" class="goku-slider caption-setting-input" min="0" max="100" step="5" data-setting="caption-bg-color" data-is-opacity="true"></div>
-                                                </div>
-                                            </div>
+                                            <div class="menu-panel-content"><div class="caption-settings-grid"><label for="accent-color">Accent</label><input type="color" id="accent-color" class="caption-setting-input" data-setting="primary-color"><label for="caption-font">Font</label><select id="caption-font" class="caption-setting-input" data-setting="caption-font-family"><option>Arial</option><option>Verdana</option><option>Helvetica</option><option>Times New Roman</option><option>Courier New</option><option>Georgia</option></select><label for="caption-font-size">Font Size</label><div class="slider-container"><input type="range" id="caption-font-size" class="goku-slider caption-setting-input" min="14" max="36" step="1" data-setting="caption-font-size" data-unit="px"></div><label for="caption-font-color">Font Color</label><input type="color" id="caption-font-color" class="caption-setting-input" data-setting="caption-font-color"><label for="caption-bg-color">BG Color</label><input type="color" id="caption-bg-color" class="caption-setting-input" data-setting="caption-bg-color" data-opacity-input="caption-bg-opacity"><label for="caption-bg-opacity">BG Opacity</label><div class="slider-container"><input type="range" id="caption-bg-opacity" class="goku-slider caption-setting-input" min="0" max="100" step="5" data-setting="caption-bg-color" data-is-opacity="true"></div></div></div>
+                                        </div>
+                                        <!-- Panel 4: Quality -->
+                                        <div class="menu-panel quality-panel">
+                                            <div class="menu-header"><button class="menu-back-btn" data-target-panel="main"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button><span>Quality</span></div>
+                                            <div class="menu-panel-content"><div class="quality-menu-list menu-list"></div></div>
                                         </div>
                                     </div>
                                 </div>
@@ -297,6 +308,9 @@
             this.#captionsStatus = D('.captions-status');
             this.#captionsTrackList = D('.captions-track-list');
             this.#captionSettingInputs = DAll('.caption-setting-input');
+            this.#qualityMenuBtn = D('.quality-menu-btn');
+            this.#qualityStatus = D('.quality-status');
+            this.#qualityMenuList = D('.quality-menu-list');
         }
 
         #bindEventHandlers() {
@@ -311,17 +325,15 @@
             this.#updatePlayPauseIcon();
             this.#updateVolumeUI();
             
-            const savedSpeed = parseFloat(localStorage.getItem(PLAYER_SPEED_KEY));
+            const savedSpeed = parseFloat(localStorage.getItem(CustomVideoPlayer.#PLAYER_SPEED_KEY));
             this.#setSpeed(this.#PLAYBACK_SPEEDS.includes(savedSpeed) ? savedSpeed : 1, false); 
             
-            this.#captionsBtn.style.display = 'none';
-            this.#captionsMenuBtn.style.display = 'none';
+            // Feature detection
             if (!document.pictureInPictureEnabled) this.#pipBtn.style.display = 'none';
             if (!window.AudioContext && !window.webkitAudioContext) {
                  this.#volumeBoosterBtn.style.display = 'none';
                  this.#container.querySelector('.volume-booster-toggle').style.display = 'none';
             }
-
             if (this.#video.currentSrc) this.#setupVideoSource(this.#video.currentSrc);
         }
         
@@ -331,7 +343,13 @@
         }
 
         #attachEventListeners() {
-            // Video Element Events
+            this.#attachVideoListeners();
+            this.#attachControlListeners();
+            this.#attachContainerListeners();
+            this.#attachGlobalListeners();
+        }
+
+        #attachVideoListeners() {
             this.#video.addEventListener('loadedmetadata', this.#handleLoadedMetadata.bind(this));
             this.#video.textTracks.addEventListener('addtrack', this.#handleTrackChange.bind(this));
             this.#video.textTracks.addEventListener('removetrack', this.#handleTrackChange.bind(this));
@@ -342,9 +360,12 @@
             this.#video.addEventListener('volumechange', this.#updateVolumeUI.bind(this));
             this.#video.addEventListener('enterpictureinpicture', () => this.#pipBtn.classList.add('active'));
             this.#video.addEventListener('leavepictureinpicture', () => this.#pipBtn.classList.remove('active'));
-            
-            // Player Controls
-            [this.#playPauseBtn, this.#bigPlayBtn, this.#video].forEach(el => el?.addEventListener('click', () => this.#togglePlay()));
+        }
+
+        #attachControlListeners() {
+            [this.#playPauseBtn, this.#bigPlayBtn, this.#video].forEach(el => el?.addEventListener('click', (e) => { if(e.target === this.#video) this.#togglePlay(); }));
+            this.#playPauseBtn.addEventListener('click', () => this.#togglePlay());
+            this.#bigPlayBtn.addEventListener('click', () => this.#togglePlay());
             this.#muteBtn.addEventListener('click', this.#toggleMute.bind(this));
             this.#fullscreenBtn.addEventListener('click', this.#toggleFullscreen.bind(this));
             this.#pipBtn.addEventListener('click', this.#togglePip.bind(this));
@@ -353,42 +374,39 @@
             this.#downloadBtn.addEventListener('click', this.#handleDownloadVideo.bind(this));
             this.#volumeBoosterBtn.addEventListener('click', this.#toggleVolumeBooster.bind(this));
             this.#speedSlider.addEventListener('input', () => { this.#setSpeed(this.#PLAYBACK_SPEEDS[this.#speedSlider.value]); });
-            
-            // Settings Menu
             this.#settingsMenu.addEventListener('click', this.#handleMenuClick.bind(this));
-
-            // Scrubbing and Volume
             this.#progressBarContainer.addEventListener('mousedown', this.#handleScrubbingStart.bind(this));
             this.#progressBarContainer.addEventListener('mousemove', this.#updateSeekTooltip.bind(this));
             this.#progressBarContainer.addEventListener('mouseleave', () => this.#seekTooltip.style.display = 'none');
             this.#volumeSlider.addEventListener('mousedown', this.#handleVolumeDragStart.bind(this));
+            this.#captionSettingInputs.forEach(input => input.addEventListener('input', this.#handleCaptionInputChange.bind(this)));
+        }
 
-            // Global / Container Events
-            document.addEventListener('fullscreenchange', this.#updateFullscreenUI.bind(this));
-            document.addEventListener('click', this.#handleDocumentClick.bind(this));
+        #attachContainerListeners() {
             this.#container.addEventListener('keydown', this.#handleKeydown.bind(this));
             this.#container.addEventListener('mousemove', this.#showControls.bind(this));
             this.#container.addEventListener('mouseleave', () => this.#hideControls());
-            
-            // Caption Settings
-            this.#captionSettingInputs.forEach(input => input.addEventListener('input', this.#handleCaptionInputChange.bind(this)));
+        }
 
-            // Thumbnail generation
+        #attachGlobalListeners() {
+            document.addEventListener('fullscreenchange', this.#updateFullscreenUI.bind(this));
+            document.addEventListener('click', this.#handleDocumentClick.bind(this));
             this.#thumbnailVideo.addEventListener('seeked', () => { this.#thumbnailCtx.drawImage(this.#thumbnailVideo, 0, 0, this.#thumbnailCanvas.width, this.#thumbnailCanvas.height); });
         }
         
-        // --- Core Player & UI Methods ---
+        // --- 2. Core Player & UI Methods ---
+
         #togglePlay() { this.#video.paused ? this.#video.play() : this.#video.pause(); }
         #toggleMute() { this.#video.muted = !this.#video.muted; }
         #toggleFullscreen() { document.fullscreenElement ? document.exitFullscreen() : this.#container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); }
-        #togglePip() { document.pictureInPictureElement ? document.exitPictureInPicture() : document.pictureInPictureEnabled && this.#video.requestPictureInPicture(); }
+        #togglePip() { document.pictureInPictureElement ? document.exitPictureInPicture() : this.#video.requestPictureInPicture(); }
 
         #setSpeed(speed, save = true) {
             const newSpeed = parseFloat(speed);
             if (isNaN(newSpeed) || !this.#PLAYBACK_SPEEDS.includes(newSpeed)) return;
             this.#video.playbackRate = newSpeed;
             if (save) {
-                try { localStorage.setItem(PLAYER_SPEED_KEY, newSpeed); } 
+                try { localStorage.setItem(CustomVideoPlayer.#PLAYER_SPEED_KEY, newSpeed); } 
                 catch (e) { console.error("Could not save player speed.", e); }
             }
             const speedIndex = this.#PLAYBACK_SPEEDS.indexOf(newSpeed);
@@ -396,6 +414,13 @@
             const speedText = `${(newSpeed % 1 === 0) ? newSpeed.toFixed(1) : newSpeed.toString()}×`;
             this.#speedDisplay.textContent = speedText;
             if(this.#speedPanelDisplay) this.#speedPanelDisplay.textContent = speedText;
+        }
+        
+        #changeSpeed(direction) {
+            const currentSpeed = this.#video.playbackRate;
+            const currentIndex = this.#PLAYBACK_SPEEDS.indexOf(currentSpeed);
+            const newIndex = Math.max(0, Math.min(this.#PLAYBACK_SPEEDS.length - 1, currentIndex + direction));
+            this.#setSpeed(this.#PLAYBACK_SPEEDS[newIndex]);
         }
 
         #updatePlayPauseIcon() { 
@@ -427,6 +452,8 @@
             this.#progressBarFilled.style.width = `${(this.#video.currentTime / this.#video.duration) * 100}%`;
         }
         
+        // --- 3. Event Handlers ---
+
         #handleLoadedMetadata() {
             this.#updateTimeDisplay();
             if (this.#video.videoWidth > 0 && this.#video.videoHeight > 0) {
@@ -434,11 +461,48 @@
             }
             this.#updateProgressBar();
             if (this.#video.src && !this.#thumbnailVideo.src) this.#setupVideoSource(this.#video.src);
-            this.#handleTrackChange(); // Populate captions menu
+            this.#handleTrackChange();
+            this.#handleQualitySourceChange();
         }
 
         #handlePlay() { this.#updatePlayPauseIcon(); this.#startProgressLoop(); this.#showControls(); }
         #handlePause() { this.#updatePlayPauseIcon(); this.#stopProgressLoop(); this.#showControls(); }
+
+        #handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.#closeAllMenus(); }
+        
+        #handleKeydown(e) {
+            if (e.target.matches('input, textarea, select')) return;
+            const key = e.key.toLowerCase();
+            const numericKey = parseInt(key, 10);
+
+            if (!isNaN(numericKey) && this.#video.duration > 0) {
+                e.preventDefault();
+                this.#video.currentTime = this.#video.duration * (numericKey / 10);
+                return;
+            }
+            
+            if (e.ctrlKey && key === 'z') { e.preventDefault(); this.#toggleVolumeBooster(); return; }
+
+            const actions = {
+                " ": () => this.#togglePlay(),
+                "k": () => this.#togglePlay(),
+                "m": () => this.#toggleMute(),
+                "f": () => this.#toggleFullscreen(),
+                "p": () => this.#togglePip(),
+                "c": () => this.#toggleCaptions(),
+                "arrowleft": () => { this.#video.currentTime -= 5; },
+                "arrowright": () => { this.#video.currentTime += 5; },
+                "j": () => { this.#video.currentTime -= 10; },
+                "l": () => { this.#video.currentTime += 10; },
+                ",": () => this.#changeSpeed(-1),
+                ".": () => this.#changeSpeed(1),
+                "<": () => this.#changeSpeed(-1),
+                ">": () => this.#changeSpeed(1)
+            };
+            if(actions[key]) { e.preventDefault(); actions[key](); }
+        }
+
+        // --- 4. Scrubbing & Volume Drag ---
 
         #handleScrubbing(e) {
             const rect = this.#progressBarContainer.getBoundingClientRect();
@@ -497,29 +561,8 @@
             this.#isDraggingVolume = false;
             document.removeEventListener('mousemove', this.#boundHandleVolumeDrag);
         }
-        #handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.#closeAllMenus(); }
-        
-        #handleKeydown(e) {
-            if (e.target.matches('input, textarea, select')) return;
-            const key = e.key.toLowerCase();
-            e.preventDefault();
 
-            if (e.ctrlKey && key === 'z') { this.#toggleVolumeBooster(); return; }
-
-            const actions = {
-                " ": () => this.#togglePlay(),
-                "k": () => this.#togglePlay(),
-                "m": () => this.#toggleMute(),
-                "f": () => this.#toggleFullscreen(),
-                "p": () => this.#togglePip(),
-                "c": () => this.#toggleCaptions(),
-                "arrowleft": () => { this.#video.currentTime -= 5; },
-                "arrowright": () => { this.#video.currentTime += 5; },
-                "j": () => { this.#video.currentTime -= 10; },
-                "l": () => { this.#video.currentTime += 10; },
-            };
-            actions[key]?.();
-        }
+        // --- 5. Controls Visibility & Animation Loop ---
         
         #startProgressLoop() { this.#stopProgressLoop(); const loop = () => { this.#updateProgressBar(); this.#animationFrameId = requestAnimationFrame(loop); }; this.#animationFrameId = requestAnimationFrame(loop); }
         #stopProgressLoop() { cancelAnimationFrame(this.#animationFrameId); }
@@ -534,7 +577,6 @@
                 this.#controlsTimeout = setTimeout(() => this.#hideControls(), 2600);
             }
         }
-
         #hideControls() {
             if (this.#isScrubbing || this.#settingsMenu.classList.contains('visible') || this.#video.paused) return;
             this.#videoControls.classList.remove('visible');
@@ -542,12 +584,15 @@
             this.#container.classList.add('no-cursor');
         }
 
+        // --- 6. Feature Modules (Download, Captions, Quality, Booster) ---
+
         async #handleDownloadVideo() {
             if (!this.#video.currentSrc || this.#downloadBtn.classList.contains('disabled')) return;
             const videoUrl = this.#video.currentSrc;
             let filename = videoUrl.split('/').pop().split('?')[0] || 'video.mp4';
             if (!filename.includes('.')) filename += '.mp4';
 
+            this.#downloadBtn.classList.add('disabled');
             try {
                 const response = await fetch(videoUrl);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -564,10 +609,11 @@
             } catch (error) {
                 console.error("Failed to download video:", error);
                 alert(`Failed to download video. This might be due to server configuration (CORS) or network issues.`);
+            } finally {
+                this.#downloadBtn.classList.remove('disabled');
             }
         }
 
-        // --- Caption System Methods ---
         #handleTrackChange() { this.#updateCaptionButtonVisibility(); this.#populateCaptionsMenu(); }
         #updateCaptionButtonVisibility() {
             const hasTracks = this.#video.textTracks?.length > 0;
@@ -577,21 +623,14 @@
         }
         #populateCaptionsMenu() {
             this.#captionsTrackList.innerHTML = '';
-            const offButton = this.#createCaptionMenuItem('Off', -1);
+            const offButton = this.#createMenuItem('Off', -1);
             this.#captionsTrackList.appendChild(offButton);
             Array.from(this.#video.textTracks).forEach((track, index) => {
                 const label = track.label || `Track ${index + 1}`;
-                this.#captionsTrackList.appendChild(this.#createCaptionMenuItem(label, index));
+                this.#captionsTrackList.appendChild(this.#createMenuItem(label, index, 'trackIndex'));
                 track.mode = 'hidden';
             });
             this.#updateActiveCaptionIndicator();
-        }
-        #createCaptionMenuItem(label, index) {
-            const button = document.createElement('button');
-            button.className = 'menu-item';
-            button.dataset.trackIndex = index;
-            button.innerHTML = `<span class="check-mark"></span> ${label}`;
-            return button;
         }
         #toggleCaptions() {
             if (this.#video.textTracks.length === 0) return;
@@ -620,8 +659,50 @@
                 button.querySelector('.check-mark').textContent = isButtonActive ? '✓' : '';
             });
         }
+        
+        #handleQualitySourceChange() { this.#updateQualityButtonVisibility(); this.#populateQualityMenu(); }
+        #updateQualityButtonVisibility() {
+            const hasMultipleSources = this.#video.querySelectorAll('source').length > 1;
+            this.#qualityMenuBtn.style.display = hasMultipleSources ? 'flex' : 'none';
+        }
+        #populateQualityMenu() {
+            this.#qualityMenuList.innerHTML = '';
+            const sources = Array.from(this.#video.querySelectorAll('source'));
+            sources.forEach((source, index) => {
+                const label = source.dataset.label || `${source.getAttribute('size')}p`;
+                this.#qualityMenuList.appendChild(this.#createMenuItem(label, index, 'qualityIndex'));
+            });
+            this.#updateActiveQualityIndicator();
+        }
+        #setQuality(index) {
+            const sources = this.#video.querySelectorAll('source');
+            const newSource = sources[parseInt(index, 10)];
+            if (!newSource || this.#video.currentSrc.endsWith(newSource.getAttribute('src'))) return;
 
-        // --- Volume Booster Methods ---
+            const currentTime = this.#video.currentTime;
+            const wasPaused = this.#video.paused;
+
+            this.#video.src = newSource.getAttribute('src');
+            this.#video.load();
+            this.#video.currentTime = currentTime;
+            if (!wasPaused) this.#video.play();
+            
+            this.#updateActiveQualityIndicator();
+            this.#closeAllMenus();
+        }
+        #updateActiveQualityIndicator() {
+            const sources = Array.from(this.#video.querySelectorAll('source'));
+            let activeIndex = sources.findIndex(s => this.#video.currentSrc.endsWith(s.getAttribute('src')));
+
+            this.#qualityMenuList.querySelectorAll('.menu-item').forEach(button => {
+                const isButtonActive = parseInt(button.dataset.qualityIndex, 10) === activeIndex;
+                button.classList.toggle('active', isButtonActive);
+                button.querySelector('.check-mark').textContent = isButtonActive ? '✓' : '';
+            });
+            const statusText = activeIndex > -1 ? (sources[activeIndex].dataset.label || `${sources[activeIndex].getAttribute('size')}p`) : 'Auto';
+            this.#qualityStatus.innerHTML = `${statusText} <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg>`;
+        }
+        
         async #initializeAudioBooster() {
             if (this.#mediaSource) return true;
             try {
@@ -649,19 +730,24 @@
             this.#boosterStatus.textContent = this.#isBoosterActive ? 'On' : 'Off';
         }
 
-        // --- Menu and Settings Methods ---
+        // --- 7. Settings Menu & Persistence ---
+
         #handleMenuClick(e) {
             const button = e.target.closest('button');
             if (!button) return;
+
             const targetPanel = button.dataset.targetPanel;
             const trackIndex = button.dataset.trackIndex;
+            const qualityIndex = button.dataset.qualityIndex;
+
             if (targetPanel) { this.#navigateMenu(targetPanel); } 
-            else if (trackIndex !== undefined) { this.#setCaptionTrack(trackIndex); } 
+            else if (trackIndex !== undefined) { this.#setCaptionTrack(trackIndex); }
+            else if (qualityIndex !== undefined) { this.#setQuality(qualityIndex); }
             else if (button.classList.contains('volume-booster-toggle')) { this.#toggleVolumeBooster(); }
         }
         #toggleMenu(menu, button) { const isVisible = menu.classList.toggle('visible'); button.classList.toggle('menu-open', isVisible); if (isVisible) { this.#showControls(); } else { this.#navigateMenu('main'); this.#hideControls(); } }
         #closeAllMenus() { this.#settingsMenu.classList.remove('visible'); this.#settingsBtn.classList.remove('menu-open'); this.#navigateMenu('main'); }
-        #navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions-track': 2, 'captions-style': 3 }; const index = panelIndex[panelName] || 0; this.#menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
+        #navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions-track': 2, 'captions-style': 3, 'quality': 4 }; const index = panelIndex[panelName] || 0; this.#menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
         #handleCaptionInputChange(e) {
             const input = e.currentTarget;
             const setting = input.dataset.setting;
@@ -679,17 +765,16 @@
             this.#saveSingleSetting(setting, value);
         }
 
-        // --- Settings Persistence ---
         #saveSingleSetting(key, value) {
             try {
-                const settings = JSON.parse(localStorage.getItem(PLAYER_SETTINGS_KEY)) || {};
+                const settings = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY)) || {};
                 settings[key] = value;
-                localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(settings));
+                localStorage.setItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY, JSON.stringify(settings));
             } catch (e) { console.error("Could not save player setting.", e); }
         }
         #loadSettings() {
             try {
-                const savedSettings = JSON.parse(localStorage.getItem(PLAYER_SETTINGS_KEY));
+                const savedSettings = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY));
                 const defaultSettings = { 'primary-color': '#00a8ff', 'caption-font-family': 'Arial', 'caption-font-size': '22px', 'caption-font-color': '#ffffff', 'caption-bg-color': 'rgba(0, 0, 0, 0.75)' };
                 const settings = { ...defaultSettings, ...(savedSettings || {}) };
                 for (const key in settings) { this.#container.style.setProperty(`--${key}`, settings[key]); }
@@ -713,13 +798,23 @@
             });
         }
 
-        // --- Helper Methods ---
+        // --- 8. Helper Methods ---
+        
+        #createMenuItem(label, index, dataAttribute = 'trackIndex') {
+            const button = document.createElement('button');
+            button.className = 'menu-item';
+            button.dataset[dataAttribute] = index;
+            button.innerHTML = `<span class="check-mark"></span> ${label}`;
+            return button;
+        }
         #hexToRgba(hex, opacity) { const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16)); return `rgba(${r}, ${g}, ${b}, ${opacity})`; }
         #formatDisplayTime(timeInSeconds) { if (isNaN(timeInSeconds)) return '00:00'; const date = new Date(timeInSeconds * 1000); const timeString = date.toISOString().slice(11, 19); return (this.#video.duration || 0) >= 3600 ? timeString : timeString.slice(3); }
     }
 
+    // --- Auto-Initialization ---
+    // Wait for the DOM to be fully loaded before initializing players.
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('video.cvp').forEach(videoEl => new CustomVideoPlayer(videoEl));
+        document.querySelectorAll('video.goku-player, video.cvp').forEach(videoEl => new CustomVideoPlayer(videoEl));
     });
 
 })();
