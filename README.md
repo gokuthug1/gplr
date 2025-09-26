@@ -115,7 +115,7 @@ This complete example demonstrates video quality switching and multiple caption 
           <!-- The player will automatically detect these sources for quality switching -->
           <source src="http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
           <source src="http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_2160p_60fps_normal.mp4" type="video/mp4" size="2160" data-label="4K UHD">
-          <source src="https://drive.google.com/file/d/1G4TPYtPxGhdc79QAi1aLxWxdTnK87Rmz/view?usp=sharing" type="video/avi" size="480" data-label="480p SD">
+          <source src="https://drive.google.com/file/d/1gvKMEKGwVS2DklsrIgKdoeN49m5bRZ-h/view?usp=sharing" type="video/avi" size="480" data-label="480p SD">
           
           <!-- The player will also detect all tracks and build the captions menu -->
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
