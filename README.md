@@ -80,9 +80,9 @@ This complete example demonstrates video quality switching and multiple caption 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF--8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.1.0</title>
+    <title>GokuPlr v2.1.0 - Fixed Google Drive Links</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -112,10 +112,18 @@ This complete example demonstrates video quality switching and multiple caption 
           poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
           crossorigin="anonymous"
         >
-          <!-- The player will automatically detect these sources for quality switching -->
-          <source src="https://drive.google.com/file/d/1UsRjbUIf1MkgxG8mFt6aMCaDgRzI-d6D/view?usp=sharing" type="video/mp4" size="1080" data-label="1080p HD" default>
-          <source src="https://drive.google.com/file/d/1HfXI4xWbDNldOwIEaff4T6DYdw7W13nv/view?usp=sharing" type="video/mp4" size="2160" data-label="4K UHD">
-          <source src="https://drive.google.com/file/d/1gvKMEKGwVS2DklsrIgKdoeN49m5bRZ-h/view?usp=sharing" type="video/avi" size="480" data-label="480p SD">
+          <!-- 
+            FIXED: Google Drive "sharing" links were converted to direct-access links.
+            The format is: https://drive.google.com/uc?export=view&id=FILE_ID
+          -->
+          <source src="https://drive.google.com/uc?export=view&id=1UsRjbUIf1MkgxG8mFt6aMCaDgRzI-d6D" type="video/mp4" size="1080" data-label="1080p HD" default>
+          <source src="https://drive.google.com/uc?export=view&id=1HfXI4xWbDNldOwIEaff4T6DYdw7W13nv" type="video/mp4" size="2160" data-label="4K UHD">
+          
+          <!-- 
+            FIXED: Changed type="video/avi" to "video/mp4" for browser compatibility.
+            The actual file on Google Drive MUST be an MP4 for this to work.
+          -->
+          <source src="https://drive.google.com/uc?export=view&id=1gvKMEKGwVS2DklsrIgKdoeN49m5bRZ-h" type="video/mp4" size="480" data-label="480p SD">
           
           <!-- The player will also detect all tracks and build the captions menu -->
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
@@ -124,7 +132,6 @@ This complete example demonstrates video quality switching and multiple caption 
     </div>
 
     <!-- The 'defer' attribute ensures the script runs after the document is parsed -->
-    <!-- Note: For backward compatibility, the old 'cvp' class still works. -->
     <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.1.0/plr.js" defer></script>
 
 </body>
