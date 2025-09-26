@@ -2,7 +2,7 @@
 
 # GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.0.0)
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.1.0)
 
 GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful and feature-rich player. It's designed for easy integration, high performance, and extensive customization.
 
@@ -10,7 +10,7 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ## Table of Contents
 
-- [Changelog (v2.0.0)](#changelog-v200)
+- [Changelog](#changelog)
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -19,9 +19,19 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ---
 
-## Changelog (v2.0.0)
+## Changelog
 
-This version introduces significant new features and internal improvements for a more powerful and robust player.
+### v2.1.0
+
+-   **Feature: Expanded Playback Speeds:** Increased the maximum playback speed up to **8x**.
+-   **Feature: Volume Memory:** The player now saves your volume and mute settings, restoring them automatically in your next session.
+-   **Feature: Central Action Indicator:** A new, non-intrusive icon appears in the center of the player to provide clear visual feedback for actions like play, pause, seek, and volume changes.
+-   **Feature: New Keyboard Shortcuts:** Use the **Up/Down Arrow** keys to adjust the volume.
+-   **Feature: Double-Click Fullscreen:** You can now double-click the video area to quickly toggle fullscreen mode.
+
+### v2.0.0
+
+This version introduced significant new features and internal improvements for a more powerful and robust player.
 
 -   **New: Video Quality Selection:** The player now automatically detects multiple `<source>` tags on a video element and builds a settings menu to allow users to switch between different video qualities on the fly.
 -   **New: Advanced Keyboard Shortcuts:**
@@ -41,13 +51,16 @@ This version introduces significant new features and internal improvements for a
     -   Intuitive menu separates track selection from style customization.
     -   Customize font, size, color, background, and opacity.
 -   **Persistent Customization:**
-    -   Control playback speed (0.5x to 2x).
+    -   Control playback speed (0.5x to 8x).
     -   Customize the player's primary accent color and caption styles.
     -   All settings are saved in `localStorage` to persist across sessions.
+-   **Volume Memory:** Remembers your last volume and mute settings between sessions.
 -   **Volume Booster:** Utilizes the Web Audio API to boost volume up to 200%, accessible via a control button or `Ctrl`+`Z`.
+-   **Central Action Indicator:** Provides clear visual feedback for play, pause, seek, and volume changes.
+-   **Double-Click Fullscreen:** Quickly toggle fullscreen by double-clicking the video.
 -   **Thumbnail Previews on Scrub:** See a video frame preview when hovering over the progress bar.
 -   **Comprehensive Keyboard Shortcuts:** Full control over playback, volume, seeking, fullscreen, speed, and more.
--   **Fully Refactored & Modernized:** Written in modern ES6+ JavaScript with no external dependencies.
+-   **Modern & Dependency-Free:** Written in modern ES6+ JavaScript with no external dependencies.
 -   **Native Browser Features:** Full support for Picture-in-Picture and Fullscreen modes.
 -   **Responsive & Lightweight:** Looks great on all screen sizes.
 -   **Simple Integration:** Add it to your site with a single script tag and a CSS class.
@@ -69,7 +82,7 @@ This complete example demonstrates video quality switching and multiple caption 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.0.0</title>
+    <title>GokuPlr v2.1.0</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -112,7 +125,7 @@ This complete example demonstrates video quality switching and multiple caption 
 
     <!-- The 'defer' attribute ensures the script runs after the document is parsed -->
     <!-- Note: For backward compatibility, the old 'cvp' class still works. -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.0.0/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.1.0/plr.js" defer></script>
 
 </body>
 </html>
@@ -131,6 +144,8 @@ This complete example demonstrates video quality switching and multiple caption 
 | `C`            | Toggle Captions                               |
 | `L` or `→`     | Seek Forward 10s / 5s                         |
 | `J` or `←`     | Seek Backward 10s / 5s                        |
+| `↑`            | Increase Volume by 5%                         |
+| `↓`            | Decrease Volume by 5%                         |
 | `>` or `.`     | Increase Playback Speed                       |
 | `<` or `,`     | Decrease Playback Speed                       |
 | `0` - `9`      | Seek to 0% - 90% of the video duration        |
