@@ -1,12 +1,6 @@
 /**
- * GokuPlr v2.0.0
+ * GokuPlr v2.1.0
  * A modern, feature-rich, and customizable HTML5 video player.
- *
- * Refactored and updated for better readability, maintainability, and new features.
- * - Added Video Quality Selection UI (detects <source> tags).
- * - Added keyboard shortcuts for speed control (< >) and quick seeking (0-9).
- * - Improved code structure and organization.
- * - Enhanced UI feedback for volume booster and download actions.
  */
 
 (function() {
@@ -20,8 +14,9 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.0.0';
+        static #version = '2.1.0';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
+        static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
         static #audioContext = null; // Shared AudioContext for efficiency.
 
@@ -33,6 +28,7 @@
 
         // State Management
         #controlsTimeout = null;
+        #indicatorTimeout = null;
         #animationFrameId = null;
         #isScrubbing = false;
         #isDraggingVolume = false;
@@ -46,7 +42,7 @@
         #isBoosterActive = false;
         
         // Configuration
-        #PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        #PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8];
         #BOOSTER_LEVEL = 2; // 200% volume
 
         // DOM Element Cache
@@ -57,7 +53,18 @@
         #settingsBtn; #settingsMenu; #menuPanelsWrapper; #speedSlider; #speedDisplay;
         #speedPanelDisplay; #volumeBoosterBtn; #boosterStatus; #captionsMenuBtn;
         #captionsStatus; #captionsTrackList; #captionSettingInputs;
-        #qualityMenuBtn; #qualityStatus; #qualityMenuList;
+        #qualityMenuBtn; #qualityStatus; #qualityMenuList; #indicator; #indicatorIcon;
+
+        // Icon paths for the central indicator
+        #ICON_PATHS = {
+            play: 'M8 5v14l11-7z',
+            pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
+            volumeUp: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z',
+            volumeDown: 'M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z',
+            muted: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
+            seekForward: 'M10 18c-3.31 0-6-2.69-6-6s2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2c0 3.31-2.69 6-6 6zm-2.5-4H9v-6l-2.5 1.75L5.87 9.5 10 6.5v6z',
+            seekBackward: 'M14 6c3.31 0 6 2.69 6 6s-2.69 6-6 6v-4l-5 5 5 5v-4c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8h2c0-3.31 2.69-6 6-6zm5.5 4H18v6l2.5-1.75L21.13 14.5 17 17.5v-6z'
+        };
 
         // Bound event handlers for dynamic attachment/detachment
         #boundHandleScrubbing;
@@ -149,12 +156,15 @@
                 .volume-container:hover .volume-thumb { opacity: 1; }
                 .time-display { color: var(--text-color); font-size: 14px; font-variant-numeric: tabular-nums; user-select: none; }
                 
-                /* --- Big Play Button --- */
+                /* --- Big Play Button & Central Indicator --- */
                 .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 1; padding: 0; }
                 .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); }
                 .big-play-button:hover svg { fill: var(--primary-color); }
                 .big-play-button svg { width: 80px; height: 80px; fill: var(--text-color); transition: fill var(--transition-speed); }
                 .video-player-container.playing .big-play-button { opacity: 0; pointer-events: none; }
+                .player-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(20, 20, 20, 0.7); padding: 15px; border-radius: 50%; opacity: 0; transition: opacity 0.2s, transform 0.1s; pointer-events: none; z-index: 1; }
+                .player-indicator.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                .player-indicator .indicator-icon { width: 48px; height: 48px; fill: #fff; }
 
                 /* --- Settings Menu --- */
                 .settings-menu { position: relative; }
@@ -190,7 +200,9 @@
                 /* --- Shared Slider Styles --- */
                 input[type=range].goku-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; background: var(--progress-bar-bg); border-radius: 5px; outline: none; cursor: pointer; }
                 input[type=range].goku-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; margin-top: -5px; transition: background var(--transition-speed); }
+                input[type=range].goku-slider::-moz-range-thumb { width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; cursor: pointer; border: none; transition: background var(--transition-speed); }
                 input[type=range].goku-slider:hover::-webkit-slider-thumb, input[type=range].goku-slider:focus::-webkit-slider-thumb { background: var(--primary-color); }
+                input[type=range].goku-slider:hover::-moz-range-thumb, input[type=range].goku-slider:focus::-moz-range-thumb { background: var(--primary-color); }
                 .control-button:focus-visible, .settings-menu button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 4px; }
                 
                 /* --- Responsive --- */
@@ -209,7 +221,8 @@
         
             const controlsHtml = `
                 <video class="thumbnail-video" muted playsinline style="display: none;"></video>
-                <button class="big-play-button" aria-label="Play Video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
+                <div class="player-indicator"><svg class="indicator-icon" viewBox="0 0 24 24"></svg></div>
+                <button class="big-play-button"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
                 <div class="video-controls">
                     <div class="progress-bar-container">
                         <div class="seek-tooltip"><canvas class="thumbnail-canvas"></canvas><span class="tooltip-time">00:00</span></div>
@@ -217,17 +230,17 @@
                     </div>
                     <div class="controls-bottom">
                         <div class="controls-left">
-                            <button class="control-button play-pause-btn" aria-label="Play/Pause"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5V19L19 12L8 5Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z"></path></svg></button>
+                            <button class="control-button play-pause-btn"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5V19L19 12L8 5Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z"></path></svg></button>
                             <div class="volume-container">
-                                <button class="control-button mute-btn" aria-label="Mute/Unmute"><svg class="volume-high-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.84 14 18.7V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"></path></svg><svg class="volume-medium-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12Z"></path></svg><svg class="volume-low-icon" viewBox="0 0 24 24"><path d="M3 9H7L12 4V20L7 15H3V9Z"></path></svg><svg class="muted-icon" viewBox="0 0 24 24"><path d="M16.5 12C16.5 10.23 15.54 8.71 14 7.97V10.18L16.45 12.63C16.5 12.43 16.5 12.21 16.5 12ZM19 12C19 12.94 18.8 13.82 18.46 14.64L19.97 16.15C20.62 14.91 21 13.5 21 12C21 7.72 18.01 4.14 14 3.23V5.29C16.89 6.15 19 8.83 19 12ZM3 4.27L7.73 9H3V15H7L12 20V13.27L16.25 17.52C15.58 17.84 14.83 18.08 14 18.22V20.29L20 20.28L4.27 3ZM12 4L10.12 5.88L12 7.76V4Z"></path></svg></button>
+                                <button class="control-button mute-btn"><svg class="volume-high-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.84 14 18.7V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"></path></svg><svg class="volume-medium-icon" viewBox="0 0 24 24"><path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.54 8.71 14 7.97V16.02C15.54 15.29 16.5 13.77 16.5 12Z"></path></svg><svg class="volume-low-icon" viewBox="0 0 24 24"><path d="M3 9H7L12 4V20L7 15H3V9Z"></path></svg><svg class="muted-icon" viewBox="0 0 24 24"><path d="M16.5 12C16.5 10.23 15.54 8.71 14 7.97V10.18L16.45 12.63C16.5 12.43 16.5 12.21 16.5 12ZM19 12C19 12.94 18.8 13.82 18.46 14.64L19.97 16.15C20.62 14.91 21 13.5 21 12C21 7.72 18.01 4.14 14 3.23V5.29C16.89 6.15 19 8.83 19 12ZM3 4.27L7.73 9H3V15H7L12 20V13.27L16.25 17.52C15.58 17.84 14.83 18.08 14 18.22V20.29L20 20.28L4.27 3ZM12 4L10.12 5.88L12 7.76V4Z"></path></svg></button>
                                 <div class="volume-slider"><div class="volume-filled"></div><div class="volume-thumb"></div></div>
                             </div>
                             <div class="time-display"><span class="current-time">00:00</span> / <span class="total-time">00:00</span></div>
                         </div>
                         <div class="controls-right">
-                            <button class="control-button volume-booster-btn" aria-label="Toggle Volume Booster (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg></button>
+                            <button class="control-button volume-booster-btn"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg></button>
                             <div class="settings-menu">
-                                <button class="control-button settings-btn" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg></button>
+                                <button class="control-button settings-btn"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg></button>
                                 <div class="menu-content">
                                     <div class="menu-panels-wrapper">
                                         <!-- Panel 0: Main -->
@@ -242,7 +255,7 @@
                                         <!-- Panel 1: Speed -->
                                         <div class="menu-panel speed-panel">
                                             <div class="menu-header"><button class="menu-back-btn" data-target-panel="main"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button><span>Playback Speed</span></div>
-                                            <div class="menu-panel-content"><div class="speed-slider-container"><input type="range" class="goku-slider speed-slider" min="0" max="5" value="2" step="1"><span class="speed-panel-display">1.0×</span></div></div>
+                                            <div class="menu-panel-content"><div class="speed-slider-container"><input type="range" class="goku-slider speed-slider" min="0" max="7" value="2" step="1"><span class="speed-panel-display">1.0×</span></div></div>
                                         </div>
                                         <!-- Panel 2: Captions Track -->
                                         <div class="menu-panel captions-track-panel">
@@ -262,10 +275,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="control-button captions-btn" aria-label="Toggle Captions"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"></path></svg></button>
-                            <button class="control-button pip-btn" aria-label="Picture-in-Picture"><svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"></path></svg></button>
-                            <button class="control-button fullscreen-btn" aria-label="Enter Fullscreen"><svg class="enter-fs-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg><svg class="exit-fs-icon" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg></button>
-                            <button class="control-button download-btn disabled" aria-label="Download Video"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg></button>
+                            <button class="control-button captions-btn"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"></path></svg></button>
+                            <button class="control-button pip-btn"><svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"></path></svg></button>
+                            <button class="control-button fullscreen-btn"><svg class="enter-fs-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg><svg class="exit-fs-icon" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg></button>
+                            <button class="control-button download-btn disabled"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg></button>
                         </div>
                     </div>
                 </div>`;
@@ -311,6 +324,8 @@
             this.#qualityMenuBtn = D('.quality-menu-btn');
             this.#qualityStatus = D('.quality-status');
             this.#qualityMenuList = D('.quality-menu-list');
+            this.#indicator = D('.player-indicator');
+            this.#indicatorIcon = D('.indicator-icon');
         }
 
         #bindEventHandlers() {
@@ -322,6 +337,7 @@
 
         #initializePlayerState() {
             this.#loadSettings();
+            this.#loadVolume();
             this.#updatePlayPauseIcon();
             this.#updateVolumeUI();
             
@@ -357,7 +373,7 @@
             this.#video.addEventListener('pause', this.#handlePause.bind(this));
             this.#video.addEventListener('ended', () => this.#stopProgressLoop());
             this.#video.addEventListener('timeupdate', () => { if (!this.#isScrubbing) this.#updateTimeDisplay() });
-            this.#video.addEventListener('volumechange', this.#updateVolumeUI.bind(this));
+            this.#video.addEventListener('volumechange', this.#handleVolumeChange.bind(this));
             this.#video.addEventListener('enterpictureinpicture', () => this.#pipBtn.classList.add('active'));
             this.#video.addEventListener('leavepictureinpicture', () => this.#pipBtn.classList.remove('active'));
         }
@@ -386,6 +402,7 @@
             this.#container.addEventListener('keydown', this.#handleKeydown.bind(this));
             this.#container.addEventListener('mousemove', this.#showControls.bind(this));
             this.#container.addEventListener('mouseleave', () => this.#hideControls());
+            this.#container.addEventListener('dblclick', this.#handleDoubleClick.bind(this));
         }
 
         #attachGlobalListeners() {
@@ -398,7 +415,7 @@
 
         #togglePlay() { this.#video.paused ? this.#video.play() : this.#video.pause(); }
         #toggleMute() { this.#video.muted = !this.#video.muted; }
-        #toggleFullscreen() { document.fullscreenElement ? document.exitFullscreen() : this.#container.requestFullscreen().catch(err => console.error(`Fullscreen Error: ${err.message}`)); }
+        #toggleFullscreen() { document.fullscreenElement ? document.exitFullscreen() : this.#container.requestFullscreen().catch(() => {}); }
         #togglePip() { document.pictureInPictureElement ? document.exitPictureInPicture() : this.#video.requestPictureInPicture(); }
 
         #setSpeed(speed, save = true) {
@@ -407,7 +424,7 @@
             this.#video.playbackRate = newSpeed;
             if (save) {
                 try { localStorage.setItem(CustomVideoPlayer.#PLAYER_SPEED_KEY, newSpeed); } 
-                catch (e) { console.error("Could not save player speed.", e); }
+                catch (e) { /* Silently fail */ }
             }
             const speedIndex = this.#PLAYBACK_SPEEDS.indexOf(newSpeed);
             if (speedIndex > -1) this.#speedSlider.value = speedIndex;
@@ -426,7 +443,7 @@
         #updatePlayPauseIcon() { 
             const isPaused = this.#video.paused; 
             this.#container.classList.toggle('playing', !isPaused);
-            this.#playPauseBtn.setAttribute('aria-label', isPaused ? 'Play' : 'Pause');
+            this.#showIndicator(isPaused ? 'pause' : 'play');
         }
         #updateVolumeUI() {
             this.#container.classList.remove('volume-high', 'volume-medium', 'volume-low', 'muted');
@@ -435,13 +452,13 @@
             else if (level > 0.66) { this.#container.classList.add('volume-high'); } 
             else if (level > 0.33) { this.#container.classList.add('volume-medium'); }
             else { this.#container.classList.add('volume-low'); } 
-            this.#volumeFilled.style.width = `${level * 100}%`;
-            this.#volumeThumb.style.left = `${level * 100}%`;
+            const volumePercent = level * 100;
+            this.#volumeFilled.style.width = `${volumePercent}%`;
+            this.#volumeThumb.style.left = `${volumePercent}%`;
         }
         #updateFullscreenUI() { 
             const isFullscreen = !!document.fullscreenElement;
             this.#container.classList.toggle('fullscreen', isFullscreen);
-            this.#fullscreenBtn.setAttribute('aria-label', isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen');
         }
         #updateTimeDisplay() { 
             this.#currentTimeEl.textContent = this.#formatDisplayTime(this.#video.currentTime);
@@ -449,7 +466,8 @@
         }
         #updateProgressBar() { 
             if (isNaN(this.#video.duration)) return;
-            this.#progressBarFilled.style.width = `${(this.#video.currentTime / this.#video.duration) * 100}%`;
+            const percent = (this.#video.currentTime / this.#video.duration) * 100;
+            this.#progressBarFilled.style.width = `${percent}%`;
         }
         
         // --- 3. Event Handlers ---
@@ -468,7 +486,9 @@
         #handlePlay() { this.#updatePlayPauseIcon(); this.#startProgressLoop(); this.#showControls(); }
         #handlePause() { this.#updatePlayPauseIcon(); this.#stopProgressLoop(); this.#showControls(); }
 
+        #handleVolumeChange() { this.#updateVolumeUI(); this.#saveVolume(); }
         #handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.#closeAllMenus(); }
+        #handleDoubleClick(e) { if (!e.target.closest('.video-controls')) this.#toggleFullscreen(); }
         
         #handleKeydown(e) {
             if (e.target.matches('input, textarea, select')) return;
@@ -490,10 +510,12 @@
                 "f": () => this.#toggleFullscreen(),
                 "p": () => this.#togglePip(),
                 "c": () => this.#toggleCaptions(),
-                "arrowleft": () => { this.#video.currentTime -= 5; },
-                "arrowright": () => { this.#video.currentTime += 5; },
-                "j": () => { this.#video.currentTime -= 10; },
-                "l": () => { this.#video.currentTime += 10; },
+                "arrowleft": () => { this.#video.currentTime -= 5; this.#showIndicator('seekBackward'); },
+                "arrowright": () => { this.#video.currentTime += 5; this.#showIndicator('seekForward'); },
+                "arrowup": () => { this.#video.muted = false; this.#video.volume = Math.min(1, this.#video.volume + 0.05); this.#showIndicator('volumeUp'); },
+                "arrowdown": () => { this.#video.volume = Math.max(0, this.#video.volume - 0.05); this.#showIndicator('volumeDown'); },
+                "j": () => { this.#video.currentTime -= 10; this.#showIndicator('seekBackward'); },
+                "l": () => { this.#video.currentTime += 10; this.#showIndicator('seekForward'); },
                 ",": () => this.#changeSpeed(-1),
                 ".": () => this.#changeSpeed(1),
                 "<": () => this.#changeSpeed(-1),
@@ -584,6 +606,17 @@
             this.#container.classList.add('no-cursor');
         }
 
+        #showIndicator(iconName) {
+            clearTimeout(this.#indicatorTimeout);
+            const path = this.#ICON_PATHS[iconName];
+            if (!path) return;
+            this.#indicatorIcon.innerHTML = `<path d="${path}"></path>`;
+            this.#indicator.classList.add('visible');
+            this.#indicatorTimeout = setTimeout(() => {
+                this.#indicator.classList.remove('visible');
+            }, 600);
+        }
+
         // --- 6. Feature Modules (Download, Captions, Quality, Booster) ---
 
         async #handleDownloadVideo() {
@@ -607,8 +640,7 @@
                 window.URL.revokeObjectURL(blobUrl);
                 a.remove();
             } catch (error) {
-                console.error("Failed to download video:", error);
-                alert(`Failed to download video. This might be due to server configuration (CORS) or network issues.`);
+                // Silently fail
             } finally {
                 this.#downloadBtn.classList.remove('disabled');
             }
@@ -716,7 +748,6 @@
                 this.#mediaSource.connect(this.#boosterGainNode).connect(CustomVideoPlayer.#audioContext.destination);
                 return true;
             } catch (e) {
-                console.error("Failed to initialize volume booster:", e.message);
                 this.#volumeBoosterBtn.style.display = 'none';
                 this.#container.querySelector('.volume-booster-toggle').style.display = 'none';
                 return false;
@@ -770,7 +801,7 @@
                 const settings = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY)) || {};
                 settings[key] = value;
                 localStorage.setItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY, JSON.stringify(settings));
-            } catch (e) { console.error("Could not save player setting.", e); }
+            } catch (e) { /* Silently fail */ }
         }
         #loadSettings() {
             try {
@@ -779,7 +810,22 @@
                 const settings = { ...defaultSettings, ...(savedSettings || {}) };
                 for (const key in settings) { this.#container.style.setProperty(`--${key}`, settings[key]); }
                 this.#updateSettingsUI(settings);
-            } catch (e) { console.error("Could not load player settings.", e); }
+            } catch (e) { /* Silently fail */ }
+        }
+        #saveVolume() {
+            try {
+                const volumeState = { volume: this.#video.volume, muted: this.#video.muted };
+                localStorage.setItem(CustomVideoPlayer.#PLAYER_VOLUME_KEY, JSON.stringify(volumeState));
+            } catch (e) { /* Silently fail */ }
+        }
+        #loadVolume() {
+            try {
+                const savedVolume = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_VOLUME_KEY));
+                if (savedVolume !== null) {
+                    this.#video.volume = savedVolume.volume;
+                    this.#video.muted = savedVolume.muted;
+                }
+            } catch (e) { /* Silently fail */ }
         }
         #updateSettingsUI(settings) {
             this.#captionSettingInputs.forEach(input => {
