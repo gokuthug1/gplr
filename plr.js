@@ -1,6 +1,6 @@
 /**
- * GokuPlr v2.1.0
- * A modern, feature-rich, and customizable HTML5 video player.
+ * GokuPlr v2.2.0
+ * A modern, feature-rich, and customizable HTML5 video player with full mobile support.
  */
 
 (function() {
@@ -14,7 +14,7 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.1.0';
+        static #version = '2.2.0';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
         static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
@@ -35,6 +35,7 @@
         #wasPausedBeforeScrub = true;
         #activeTrackIndex = -1;
         #lastActiveTrackIndex = 0;
+        #isTouch = false;
 
         // Volume Booster State
         #mediaSource = null;
@@ -79,6 +80,7 @@
             this.#video = videoElement;
             this.#video.dataset.customPlayerInitialized = 'true';
             this.#video.controls = false; // Disable native controls
+            this.#isTouch = 'ontouchstart' in window;
 
             this.#injectStyles();
             this.#buildPlayerHtml();
@@ -102,7 +104,7 @@
                 .video-player-container { --caption-font-size: 22px; --caption-font-color: #ffffff; --caption-bg-color: rgba(0, 0, 0, 0.75); --caption-font-family: 'Arial', sans-serif; }
                 
                 /* --- Layout & Container --- */
-                .video-player-container, .video-player-container * { box-sizing: border-box; }
+                .video-player-container, .video-player-container * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
                 .video-player-container:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
                 .video-player-container { position: relative; width: 100%; background-color: #000; border-radius: var(--border-radius); overflow: hidden; font-family: var(--font-family); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; aspect-ratio: 16 / 9; }
                 .video-player-container.no-cursor { cursor: none; }
@@ -205,8 +207,16 @@
                 input[type=range].goku-slider:hover::-moz-range-thumb, input[type=range].goku-slider:focus::-moz-range-thumb { background: var(--primary-color); }
                 .control-button:focus-visible, .settings-menu button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 4px; }
                 
+                /* --- Mobile & Touch --- */
+                .touch-device .seek-tooltip { display: none !important; }
+                .touch-device .volume-slider { width: 80px; margin-left: 5px; opacity: 1; }
+                .touch-device .volume-thumb { opacity: 1; }
+                .touch-device .progress-bar { height: 8px; }
+                .touch-device .progress-bar-thumb { opacity: 1; }
+                .touch-device .control-button:hover { background: none; } /* Disable hover on touch */
+
                 /* --- Responsive --- */
-                @media (max-width: 600px) { .volume-container:hover .volume-slider { width: 50px; } .time-display { font-size: 12px; } .control-button svg { width: 20px; height: 20px; } .controls-bottom, .controls-left, .controls-right { gap: 6px; } .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } }
+                @media (max-width: 600px) { .volume-slider, .touch-device .volume-slider { width: 50px; } .time-display { font-size: 12px; } .control-button svg { width: 20px; height: 20px; } .controls-bottom, .controls-left, .controls-right { gap: 6px; } .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } }
             `;
             document.head.appendChild(style);
         }
@@ -214,6 +224,7 @@
         #buildPlayerHtml() {
             const container = document.createElement('div');
             container.className = 'video-player-container';
+            if (this.#isTouch) container.classList.add('touch-device');
             container.tabIndex = 0;
             this.#container = container;
             this.#video.parentNode.insertBefore(container, this.#video);
@@ -379,7 +390,6 @@
         }
 
         #attachControlListeners() {
-            [this.#playPauseBtn, this.#bigPlayBtn, this.#video].forEach(el => el?.addEventListener('click', (e) => { if(e.target === this.#video) this.#togglePlay(); }));
             this.#playPauseBtn.addEventListener('click', () => this.#togglePlay());
             this.#bigPlayBtn.addEventListener('click', () => this.#togglePlay());
             this.#muteBtn.addEventListener('click', this.#toggleMute.bind(this));
@@ -391,10 +401,18 @@
             this.#volumeBoosterBtn.addEventListener('click', this.#toggleVolumeBooster.bind(this));
             this.#speedSlider.addEventListener('input', () => { this.#setSpeed(this.#PLAYBACK_SPEEDS[this.#speedSlider.value]); });
             this.#settingsMenu.addEventListener('click', this.#handleMenuClick.bind(this));
+            this.#videoControls.addEventListener('click', e => e.stopPropagation());
+
+            // Scrubbing listeners (mouse & touch)
             this.#progressBarContainer.addEventListener('mousedown', this.#handleScrubbingStart.bind(this));
+            this.#progressBarContainer.addEventListener('touchstart', this.#handleScrubbingStart.bind(this), { passive: false });
             this.#progressBarContainer.addEventListener('mousemove', this.#updateSeekTooltip.bind(this));
             this.#progressBarContainer.addEventListener('mouseleave', () => this.#seekTooltip.style.display = 'none');
+
+            // Volume listeners (mouse & touch)
             this.#volumeSlider.addEventListener('mousedown', this.#handleVolumeDragStart.bind(this));
+            this.#volumeSlider.addEventListener('touchstart', this.#handleVolumeDragStart.bind(this), { passive: false });
+
             this.#captionSettingInputs.forEach(input => input.addEventListener('input', this.#handleCaptionInputChange.bind(this)));
         }
 
@@ -402,6 +420,7 @@
             this.#container.addEventListener('keydown', this.#handleKeydown.bind(this));
             this.#container.addEventListener('mousemove', this.#showControls.bind(this));
             this.#container.addEventListener('mouseleave', () => this.#hideControls());
+            this.#container.addEventListener('click', this.#handleContainerClick.bind(this));
             this.#container.addEventListener('dblclick', this.#handleDoubleClick.bind(this));
         }
 
@@ -424,7 +443,7 @@
             this.#video.playbackRate = newSpeed;
             if (save) {
                 try { localStorage.setItem(CustomVideoPlayer.#PLAYER_SPEED_KEY, newSpeed); } 
-                catch (e) { /* Silently fail */ }
+                catch (e) { console.error("Failed to save speed setting:", e); }
             }
             const speedIndex = this.#PLAYBACK_SPEEDS.indexOf(newSpeed);
             if (speedIndex > -1) this.#speedSlider.value = speedIndex;
@@ -488,7 +507,32 @@
 
         #handleVolumeChange() { this.#updateVolumeUI(); this.#saveVolume(); }
         #handleDocumentClick(e) { if (!e.target.closest('.settings-menu')) this.#closeAllMenus(); }
-        #handleDoubleClick(e) { if (!e.target.closest('.video-controls')) this.#toggleFullscreen(); }
+        
+        #handleContainerClick(e) {
+            if (e.target !== this.#container && e.target !== this.#video) return;
+            if (this.#videoControls.classList.contains('visible')) {
+                this.#hideControls(true);
+            } else {
+                this.#togglePlay();
+            }
+        }
+
+        #handleDoubleClick(e) {
+            if (e.target !== this.#container && e.target !== this.#video) return;
+            const rect = this.#container.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const third = rect.width / 3;
+
+            if (clickX < third) { // Left third
+                this.#video.currentTime -= 10;
+                this.#showIndicator('seekBackward');
+            } else if (clickX > rect.width - third) { // Right third
+                this.#video.currentTime += 10;
+                this.#showIndicator('seekForward');
+            } else { // Middle third
+                this.#toggleFullscreen();
+            }
+        }
         
         #handleKeydown(e) {
             if (e.target.matches('input, textarea, select')) return;
@@ -528,13 +572,15 @@
 
         #handleScrubbing(e) {
             const rect = this.#progressBarContainer.getBoundingClientRect();
-            const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width;
+            const clientX = this.#getEventX(e);
+            const percent = Math.min(Math.max(0, clientX - rect.x), rect.width) / rect.width;
             if (isNaN(this.#video.duration)) return;
             const seekTime = percent * this.#video.duration;
             this.#progressBarFilled.style.width = `${percent * 100}%`;
             this.#currentTimeEl.textContent = this.#formatDisplayTime(seekTime);
         }
         #updateSeekTooltip(e) {
+            if (this.#isTouch) return;
             const rect = this.#progressBarContainer.getBoundingClientRect();
             const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width;
             if (isNaN(this.#video.duration) || !this.#thumbnailVideo.src) return;
@@ -548,40 +594,42 @@
             this.#seekTooltip.style.left = `${tooltipX}px`;
         }
         #handleScrubbingStart(e) {
-            e.preventDefault();
+            if (e.type === 'touchstart') e.preventDefault();
             this.#isScrubbing = true;
             this.#wasPausedBeforeScrub = this.#video.paused;
             this.#stopProgressLoop();
             if (!this.#wasPausedBeforeScrub) this.#video.pause();
             this.#handleScrubbing(e);
-            document.addEventListener('mousemove', this.#boundHandleScrubbing);
-            document.addEventListener('mouseup', this.#boundHandleScrubbingEnd, { once: true });
+            document.addEventListener(this.#isTouch ? 'touchmove' : 'mousemove', this.#boundHandleScrubbing);
+            document.addEventListener(this.#isTouch ? 'touchend' : 'mouseup', this.#boundHandleScrubbingEnd, { once: true });
         }
         #handleScrubbingEnd(e) {
             this.#isScrubbing = false;
-            document.removeEventListener('mousemove', this.#boundHandleScrubbing);
+            document.removeEventListener(this.#isTouch ? 'touchmove' : 'mousemove', this.#boundHandleScrubbing);
             const rect = this.#progressBarContainer.getBoundingClientRect();
-            const percent = Math.min(Math.max(0, e.x - rect.x), rect.width) / rect.width;
+            const clientX = this.#getEventX(e, true);
+            const percent = Math.min(Math.max(0, clientX - rect.x), rect.width) / rect.width;
             this.#video.currentTime = percent * this.#video.duration;
             if (!this.#wasPausedBeforeScrub) this.#video.play();
             this.#seekTooltip.style.display = 'none';
         }
         #handleVolumeDrag(e) {
             const rect = this.#volumeSlider.getBoundingClientRect();
-            const level = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+            const clientX = this.#getEventX(e);
+            const level = Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1);
             this.#video.volume = level;
             this.#video.muted = level === 0;
         }
         #handleVolumeDragStart(e) {
-            e.preventDefault();
+            if (e.type === 'touchstart') e.preventDefault();
             this.#isDraggingVolume = true;
             this.#handleVolumeDrag(e);
-            document.addEventListener('mousemove', this.#boundHandleVolumeDrag);
-            document.addEventListener('mouseup', this.#boundHandleVolumeDragEnd, { once: true });
+            document.addEventListener(this.#isTouch ? 'touchmove' : 'mousemove', this.#boundHandleVolumeDrag);
+            document.addEventListener(this.#isTouch ? 'touchend' : 'mouseup', this.#boundHandleVolumeDragEnd, { once: true });
         }
         #handleVolumeDragEnd() {
             this.#isDraggingVolume = false;
-            document.removeEventListener('mousemove', this.#boundHandleVolumeDrag);
+            document.removeEventListener(this.#isTouch ? 'touchmove' : 'mousemove', this.#boundHandleVolumeDrag);
         }
 
         // --- 5. Controls Visibility & Animation Loop ---
@@ -596,14 +644,14 @@
             this.#container.classList.add('controls-visible');
 
             if (!this.#video.paused) {
-                this.#controlsTimeout = setTimeout(() => this.#hideControls(), 2600);
+                this.#controlsTimeout = setTimeout(() => this.#hideControls(), 3000);
             }
         }
-        #hideControls() {
-            if (this.#isScrubbing || this.#settingsMenu.classList.contains('visible') || this.#video.paused) return;
+        #hideControls(force = false) {
+            if (!force && (this.#isScrubbing || this.#settingsMenu.classList.contains('visible') || this.#video.paused)) return;
             this.#videoControls.classList.remove('visible');
             this.#container.classList.remove('controls-visible');
-            this.#container.classList.add('no-cursor');
+            if (!this.#isTouch) this.#container.classList.add('no-cursor');
         }
 
         #showIndicator(iconName) {
@@ -640,7 +688,7 @@
                 window.URL.revokeObjectURL(blobUrl);
                 a.remove();
             } catch (error) {
-                // Silently fail
+                console.error("Download failed:", error);
             } finally {
                 this.#downloadBtn.classList.remove('disabled');
             }
@@ -748,6 +796,7 @@
                 this.#mediaSource.connect(this.#boosterGainNode).connect(CustomVideoPlayer.#audioContext.destination);
                 return true;
             } catch (e) {
+                console.error("Audio Booster initialization failed:", e);
                 this.#volumeBoosterBtn.style.display = 'none';
                 this.#container.querySelector('.volume-booster-toggle').style.display = 'none';
                 return false;
@@ -801,7 +850,7 @@
                 const settings = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY)) || {};
                 settings[key] = value;
                 localStorage.setItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY, JSON.stringify(settings));
-            } catch (e) { /* Silently fail */ }
+            } catch (e) { console.error("Failed to save setting:", e); }
         }
         #loadSettings() {
             try {
@@ -810,13 +859,13 @@
                 const settings = { ...defaultSettings, ...(savedSettings || {}) };
                 for (const key in settings) { this.#container.style.setProperty(`--${key}`, settings[key]); }
                 this.#updateSettingsUI(settings);
-            } catch (e) { /* Silently fail */ }
+            } catch (e) { console.error("Failed to load settings:", e); }
         }
         #saveVolume() {
             try {
                 const volumeState = { volume: this.#video.volume, muted: this.#video.muted };
                 localStorage.setItem(CustomVideoPlayer.#PLAYER_VOLUME_KEY, JSON.stringify(volumeState));
-            } catch (e) { /* Silently fail */ }
+            } catch (e) { console.error("Failed to save volume:", e); }
         }
         #loadVolume() {
             try {
@@ -825,7 +874,7 @@
                     this.#video.volume = savedVolume.volume;
                     this.#video.muted = savedVolume.muted;
                 }
-            } catch (e) { /* Silently fail */ }
+            } catch (e) { console.error("Failed to load volume:", e); }
         }
         #updateSettingsUI(settings) {
             this.#captionSettingInputs.forEach(input => {
@@ -846,6 +895,12 @@
 
         // --- 8. Helper Methods ---
         
+        #getEventX(e, isEndEvent = false) {
+            if (isEndEvent) {
+                return e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            }
+            return e.touches ? e.touches[0].clientX : e.clientX;
+        }
         #createMenuItem(label, index, dataAttribute = 'trackIndex') {
             const button = document.createElement('button');
             button.className = 'menu-item';
