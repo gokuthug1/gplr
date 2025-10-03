@@ -91,7 +91,7 @@ This complete example demonstrates video quality switching and multiple caption 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.2.0 - Mobile Friendly Player</title>
+    <title>GokuPlr v2.2.0</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
