@@ -127,7 +127,7 @@ This complete example demonstrates video quality switching and multiple caption 
           -->
           <source src="https://archive.org/download/BigBuckBunny-1080p/big_buck_bunny_1080p_stereo.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
           <source src="https://archive.org/download/BigBuckBunny-720p/big_buck_bunny_720p_stereo.mp4" type="video/mp4" size="720" data-label="720p">
-          <source src="https://archive.org/download/BigBuckBunny-480p/big_buck_bunny_480p_stereo.mp4" type="video/mp4" size="480" data-label="480p">
+          <source src="https://streamable.com/e/09xy8u" type="video/mp4" size="480" data-label="480p">
           
           <track kind="captions" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" label="English" default />
           <track kind="captions" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captionses.vtt" label="Español" />
