@@ -59,7 +59,7 @@
         #captionsStatus; #captionsTrackList; #captionSettingInputs;
         #qualityMenuBtn; #qualityStatus; #qualityMenuList; #indicator; #indicatorIcon;
         #ambientCanvas; #ambientCtx; #ambientModeToggle; #ambientStatus;
-        #airplayBtn; #castBtn; #shareBtn; #shareMenu;
+        #airplayBtn; #castBtn;
 
         // Icon paths for the central indicator
         #ICON_PATHS = {
@@ -68,8 +68,8 @@
             volumeUp: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z',
             volumeDown: 'M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z',
             muted: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
-            seekForward: 'M10 18c-3.31 0-6-2.69-6-6s2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2c0 3.31-2.69 6-6 6zm-2.5-4H9v-6l-2.5 1.75L5.87 9.5 10 6.5v6z',
-            seekBackward: 'M14 6c3.31 0 6 2.69 6 6s-2.69 6-6 6v-4l-5 5 5 5v-4c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8h2c0-3.31 2.69-6 6-6zm5.5 4H18v6l2.5-1.75L21.13 14.5 17 17.5v-6z'
+            seekForward: 'M12 5V1L17 6l-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6H20c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z',
+            seekBackward: 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z'
         };
 
         // Bound event handlers for dynamic attachment/detachment
@@ -178,12 +178,9 @@
                 .player-indicator.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 .player-indicator .indicator-icon { width: 48px; height: 48px; fill: #fff; }
 
-                /* --- Settings & Share Menu --- */
-                .settings-menu .menu-content, .share-menu { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
-                .settings-menu .menu-content.visible, .share-menu.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-                .share-menu { width: auto; padding: 8px; }
-                .share-menu button { width: 100%; }
-                .share-menu button:not(:last-child) { margin-bottom: 5px; }
+                /* --- Settings Menu --- */
+                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 10px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow: hidden; }
+                .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
                 .menu-panel { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
                 .menu-header { display: flex; align-items: center; padding: 8px 4px 8px 8px; font-size: 15px; font-weight: 500; color: #eee; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
@@ -262,8 +259,6 @@
                         </div>
                         <div class="controls-right">
                             <button class="control-button volume-booster-btn"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"></path></svg></button>
-                            <button class="control-button share-btn"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg></button>
-                            <div class="share-menu"><button class="menu-item" data-share="link">Copy Link</button><button class="menu-item" data-share="time">Copy Link at Current Time</button></div>
                             <button class="control-button airplay-btn"><svg viewBox="0 0 24 24"><path d="M6 22h12l-6-6zM21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4v-2H3V5h18v12h-4v2h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path></svg></button>
                             <button class="control-button cast-btn"><svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm0-4v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11z"></path></svg></button>
                             <div class="settings-menu">
@@ -361,8 +356,6 @@
             this.#ambientStatus = D('.ambient-status');
             this.#airplayBtn = D('.airplay-btn');
             this.#castBtn = D('.cast-btn');
-            this.#shareBtn = D('.share-btn');
-            this.#shareMenu = D('.share-menu');
         }
 
         #bindEventHandlers() {
@@ -425,12 +418,10 @@
             this.#pipBtn.addEventListener('click', this.#togglePip.bind(this));
             this.#captionsBtn.addEventListener('click', this.#toggleCaptions.bind(this));
             this.#settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.#toggleMenu(this.#settingsMenu, this.#settingsBtn); });
-            this.#shareBtn.addEventListener('click', (e) => { e.stopPropagation(); this.#toggleMenu(this.#shareMenu, this.#shareBtn); });
             this.#downloadBtn.addEventListener('click', this.#handleDownloadVideo.bind(this));
             this.#volumeBoosterBtn.addEventListener('click', this.#toggleVolumeBooster.bind(this));
             this.#speedSlider.addEventListener('input', () => { this.#setSpeed(this.#PLAYBACK_SPEEDS[this.#speedSlider.value]); });
             this.#settingsMenu.addEventListener('click', this.#handleMenuClick.bind(this));
-            this.#shareMenu.addEventListener('click', this.#handleShareClick.bind(this));
             this.#videoControls.addEventListener('click', e => e.stopPropagation());
 
             // Scrubbing listeners (mouse & touch)
@@ -538,7 +529,6 @@
         #handleVolumeChange() { this.#updateVolumeUI(); this.#saveVolume(); }
         #handleDocumentClick(e) { 
             if (!e.target.closest('.settings-menu')) this.#closeAllMenus();
-            if (!e.target.closest('.share-btn')) this.#shareMenu.classList.remove('visible');
         }
         
         #handleContainerClick(e) {
@@ -702,7 +692,7 @@
             }
         }
         #hideControls(force = false) {
-            if (!force && (this.#isScrubbing || this.#settingsMenu.classList.contains('visible') || this.#shareMenu.classList.contains('visible') || this.#video.paused)) return;
+            if (!force && (this.#isScrubbing || this.#settingsMenu.classList.contains('visible') || this.#video.paused)) return;
             this.#videoControls.classList.remove('visible');
             this.#container.classList.remove('controls-visible');
             if (!this.#isTouch) this.#container.classList.add('no-cursor');
@@ -953,37 +943,8 @@
             else if (button.classList.contains('ambient-mode-toggle')) { this.#toggleAmbientMode(); }
         }
 
-        async #handleShareClick(e) {
-            const button = e.target.closest('button[data-share]');
-            if (!button) return;
-
-            const type = button.dataset.share;
-            const baseUrl = window.location.href.split('?')[0].split('#')[0];
-            let urlToCopy = baseUrl;
-
-            if (type === 'time') {
-                const time = Math.floor(this.#video.currentTime);
-                urlToCopy += `?t=${time}`;
-            }
-
-            try {
-                await navigator.clipboard.writeText(urlToCopy);
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    this.#shareMenu.classList.remove('visible');
-                    this.#shareBtn.classList.remove('menu-open');
-                }, 1500);
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-                button.textContent = 'Failed!';
-                setTimeout(() => button.textContent = 'Copy Link', 1500);
-            }
-        }
-
         #toggleMenu(menu, button) { const isVisible = menu.classList.toggle('visible'); button.classList.toggle('menu-open', isVisible); if (isVisible) { this.#showControls(); } else { if (menu === this.#settingsMenu) this.#navigateMenu('main'); this.#hideControls(); } }
-        #closeAllMenus() { this.#settingsMenu.classList.remove('visible'); this.#settingsBtn.classList.remove('menu-open'); this.#shareMenu.classList.remove('visible'); this.#shareBtn.classList.remove('menu-open'); this.#navigateMenu('main'); }
+        #closeAllMenus() { this.#settingsMenu.classList.remove('visible'); this.#settingsBtn.classList.remove('menu-open'); this.#navigateMenu('main'); }
         #navigateMenu(panelName) { const panelIndex = { 'main': 0, 'speed': 1, 'captions-track': 2, 'captions-style': 3, 'quality': 4 }; const index = panelIndex[panelName] || 0; this.#menuPanelsWrapper.style.transform = `translateX(-${index * 100}%)`; }
         #handleCaptionInputChange(e) {
             const input = e.currentTarget;
