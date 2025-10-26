@@ -125,7 +125,7 @@ This complete example demonstrates video quality switching, multiple caption tra
           crossorigin="anonymous"
         >
           <!-- Video quality sources -->
-          <source src="https://archive.org/download/BigBuckBunny-1080p/big_buck_bunny_1080p_stereo.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
+          <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
           <source src="https://archive.org/download/BigBuckBunny-720p/big_buck_bunny_720p_stereo.mp4" type="video/mp4" size="720" data-label="720p">
           <source src="https://archive.org/download/BigBuckBunny-240p/big_buck_bunny_240p_stereo.mp4" type="video/mp4" size="240" data-label="240p">
           
