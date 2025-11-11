@@ -1,5 +1,5 @@
 /**
- * GokuPlr v2.3.0
+ * GokuPlr v2.3.2
  * A modern, feature-rich, and customizable HTML5 video player with full mobile support.
  * Enhanced with Ambient Mode, VTT Thumbnails, Casting, and Share functionality.
  */
@@ -15,7 +15,7 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.3.0';
+        static #version = '2.3.2';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
         static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
@@ -69,7 +69,7 @@
             volumeDown: 'M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z',
             muted: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
             seekForward: 'M12 5V1L17 6l-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6H20c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z',
-            seekBackward: 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z'
+            seekBackward: 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42-3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z'
         };
 
         // Bound event handlers for dynamic attachment/detachment
@@ -446,16 +446,50 @@
         }
 
         #attachGlobalListeners() {
-            document.addEventListener('fullscreenchange', this.#updateFullscreenUI.bind(this));
             document.addEventListener('click', this.#handleDocumentClick.bind(this));
             this.#thumbnailVideo.addEventListener('seeked', () => { this.#thumbnailCtx.drawImage(this.#thumbnailVideo, 0, 0, this.#thumbnailCanvas.width, this.#thumbnailCanvas.height); });
+            
+            // CRITICAL FIX: Listen for all prefixed versions of the fullscreenchange event
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
+                document.addEventListener(event, this.#updateFullscreenUI.bind(this));
+            });
         }
         
         // --- 2. Core Player & UI Methods ---
 
         #togglePlay() { this.#video.paused ? this.#video.play() : this.#video.pause(); }
         #toggleMute() { this.#video.muted = !this.#video.muted; }
-        #toggleFullscreen() { document.fullscreenElement ? document.exitFullscreen() : this.#container.requestFullscreen().catch(() => {}); }
+        
+        #toggleFullscreen() {
+            // Check if any element is currently in fullscreen mode, using vendor prefixes for compatibility
+            const isInFullScreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+            if (isInFullScreen) {
+                // If in fullscreen, call the appropriate method to exit
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } else {
+                // If not in fullscreen, call the appropriate method on the player container to enter
+                const el = this.#container;
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().catch(() => {});
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                } else if (el.mozRequestFullScreen) {
+                    el.mozRequestFullScreen();
+                } else if (el.msRequestFullscreen) {
+                    el.msRequestFullscreen();
+                }
+            }
+        }
+        
         #togglePip() { document.pictureInPictureElement ? document.exitPictureInPicture() : this.#video.requestPictureInPicture(); }
 
         #setSpeed(speed, save = true) {
@@ -496,10 +530,13 @@
             this.#volumeFilled.style.width = `${volumePercent}%`;
             this.#volumeThumb.style.left = `${volumePercent}%`;
         }
-        #updateFullscreenUI() { 
-            const isFullscreen = !!document.fullscreenElement;
-            this.#container.classList.toggle('fullscreen', isFullscreen);
+
+        #updateFullscreenUI() {
+            // Update the check to be cross-browser and to verify it's THIS player in fullscreen
+            const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            this.#container.classList.toggle('fullscreen', fsElement === this.#container);
         }
+
         #updateTimeDisplay() { 
             this.#currentTimeEl.textContent = this.#formatDisplayTime(this.#video.currentTime);
             this.#totalTimeEl.textContent = this.#formatDisplayTime(this.#video.duration);
