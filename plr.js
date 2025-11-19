@@ -1,5 +1,5 @@
 /**
- * GokuPlr v2.3.2
+ * GokuPlr v2.3.3
  * A modern, feature-rich, and customizable HTML5 video player with full mobile support.
  * Enhanced with Ambient Mode, VTT Thumbnails, Casting, and Share functionality.
  */
@@ -103,9 +103,10 @@
 
             const style = document.createElement('style');
             style.id = styleId;
+            // Updated primary color to Pink #ff4081 as shown in the video settings
             style.textContent = `
                 /* --- Base & Variables --- */
-                :root { --primary-color: #00a8ff; --text-color: #ffffff; --controls-bg: rgba(20, 20, 20, 0.85); --menu-bg: rgba(30, 30, 30, 0.95); --progress-bar-bg: rgba(255, 255, 255, 0.3); --tooltip-bg: rgba(0, 0, 0, 0.85); --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --border-radius: 8px; --transition-speed: 0.2s; }
+                :root { --primary-color: #ff4081; --text-color: #ffffff; --controls-bg: rgba(20, 20, 20, 0.85); --menu-bg: rgba(30, 30, 30, 0.95); --progress-bar-bg: rgba(255, 255, 255, 0.3); --tooltip-bg: rgba(0, 0, 0, 0.85); --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --border-radius: 8px; --transition-speed: 0.2s; }
                 .video-player-container { --caption-font-size: 22px; --caption-font-color: #ffffff; --caption-bg-color: rgba(0, 0, 0, 0.75); --caption-font-family: 'Arial', sans-serif; }
                 
                 /* --- Layout & Container --- */
@@ -374,7 +375,8 @@
             this.#loadVttThumbnails();
             
             const savedSpeed = parseFloat(localStorage.getItem(CustomVideoPlayer.#PLAYER_SPEED_KEY));
-            this.#setSpeed(this.#PLAYBACK_SPEEDS.includes(savedSpeed) ? savedSpeed : 1, false); 
+            // Changed default speed to 0.75 as shown in the video settings
+            this.#setSpeed(this.#PLAYBACK_SPEEDS.includes(savedSpeed) ? savedSpeed : 0.75, false); 
             
             // Feature detection
             if (!document.pictureInPictureEnabled) this.#pipBtn.style.display = 'none';
@@ -1010,7 +1012,8 @@
         #loadSettings() {
             try {
                 const savedSettings = JSON.parse(localStorage.getItem(CustomVideoPlayer.#PLAYER_SETTINGS_KEY));
-                const defaultSettings = { 'primary-color': '#00a8ff', 'caption-font-family': 'Arial', 'caption-font-size': '22px', 'caption-font-color': '#ffffff', 'caption-bg-color': 'rgba(0, 0, 0, 0.75)', 'ambient-mode': false };
+                // Default settings updated to match the video: Pink primary color and Ambient Mode enabled.
+                const defaultSettings = { 'primary-color': '#ff4081', 'caption-font-family': 'Arial', 'caption-font-size': '22px', 'caption-font-color': '#ffffff', 'caption-bg-color': 'rgba(0, 0, 0, 0.75)', 'ambient-mode': true };
                 const settings = { ...defaultSettings, ...(savedSettings || {}) };
                 for (const key in settings) { 
                     if (key === 'ambient-mode') {
