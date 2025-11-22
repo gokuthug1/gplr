@@ -1,14 +1,12 @@
 /**
- * GokuPlr v2.3.4
+ * GokuPlr v2.3.4 (Fixed)
  * A modern, feature-rich HTML5 video player.
  * 
- * Changelog v2.3.4:
- * - Added Media Session API support (OS Lock screen controls).
- * - Added Buffering/Loading Spinner.
- * - Added Haptic Feedback for mobile.
- * - Refined UI with Glassmorphism (backdrop-filter).
- * - Optimized Ambient Mode performance.
- * - Enhanced Double-tap seeking animations.
+ * Fixes Applied:
+ * - Resolved conflict between Play/Pause click and Double-tap seeking.
+ * - prevented default browser scrolling on keyboard shortcuts.
+ * - Added CORS safety checks for Volume Booster (AudioContext).
+ * - Fixed CSS duplication and potential interaction bugs.
  */
 
 (function() {
@@ -29,7 +27,7 @@
         
         // Audio & Booster
         #mediaSource = null; #boosterGainNode = null; #isBoosterActive = false;
-        #BOOSTER_MULTIPLIER = 2.5; // Increased for v2.3.4
+        #BOOSTER_MULTIPLIER = 2.5;
 
         // DOM Cache
         #elements = {};
@@ -40,6 +38,9 @@
             this.#video = videoElement;
             this.#video.dataset.gokuInitialized = 'true';
             this.#video.controls = false;
+            // Try to enable CORS for AudioContext, but don't break if strict
+            try { this.#video.crossOrigin = "anonymous"; } catch(e) {} 
+            
             this.#isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
             this.#injectStyles();
@@ -121,9 +122,9 @@
                 .gplr-btn svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
                 .gplr-btn.active svg { fill: var(--gplr-primary); }
                 
-                /* Volume */
+                /* Volume - Fixed duplicate width issue */
                 .gplr-vol-container { display: flex; align-items: center; overflow: hidden; transition: width 0.2s; }
-                .gplr-vol-slider { width: 0; height: 4px; background: rgba(255,255,255,0.3); width: 0px; margin-left: 0; overflow: hidden; transition: all 0.2s; cursor: pointer; position: relative; }
+                .gplr-vol-slider { width: 0; height: 4px; background: rgba(255,255,255,0.3); margin-left: 0; overflow: hidden; transition: all 0.2s; cursor: pointer; position: relative; }
                 .gplr-vol-container:hover .gplr-vol-slider, .gplr-container.touch .gplr-vol-slider { width: 60px; margin-left: 8px; overflow: visible; }
                 .gplr-vol-inner { height: 100%; background: #fff; width: 100%; }
 
@@ -151,7 +152,7 @@
                 }
                 .gplr-toast.visible { opacity: 1; }
 
-                /* Settings Menu (Modern) */
+                /* Settings Menu */
                 .gplr-settings {
                     position: absolute; bottom: 60px; right: 12px; width: 250px; 
                     background: var(--gplr-bg-menu); backdrop-filter: var(--gplr-glass);
@@ -326,7 +327,9 @@
             const V = this.#video;
 
             // Video Events
-            V.addEventListener('click', this.#togglePlay.bind(this));
+            // REMOVED: V.addEventListener('click', this.#togglePlay.bind(this)); 
+            // Fixed: Unified click handling in #setupInputs to prevent double-tap conflict
+            
             V.addEventListener('play', this.#handlePlay.bind(this));
             V.addEventListener('pause', this.#handlePause.bind(this));
             V.addEventListener('timeupdate', this.#handleTimeUpdate.bind(this));
@@ -338,18 +341,18 @@
             V.addEventListener('ended', () => this.#container.classList.remove('playing'));
             
             // Controls
-            E.playBtn.onclick = E.bigPlay.onclick = () => this.#togglePlay();
-            E.muteBtn.onclick = () => this.#toggleMute();
-            E.fsBtn.onclick = () => this.#toggleFullscreen();
-            E.pipBtn.onclick = () => document.pictureInPictureElement ? document.exitPictureInPicture() : V.requestPictureInPicture();
-            E.dlBtn.onclick = () => this.#downloadVideo();
-            E.ccBtn.onclick = () => this.#toggleCC();
+            E.playBtn.onclick = E.bigPlay.onclick = (e) => { e.stopPropagation(); this.#togglePlay(); };
+            E.muteBtn.onclick = (e) => { e.stopPropagation(); this.#toggleMute(); };
+            E.fsBtn.onclick = (e) => { e.stopPropagation(); this.#toggleFullscreen(); };
+            E.pipBtn.onclick = (e) => { e.stopPropagation(); document.pictureInPictureElement ? document.exitPictureInPicture() : V.requestPictureInPicture(); };
+            E.dlBtn.onclick = (e) => { e.stopPropagation(); this.#downloadVideo(); };
+            E.ccBtn.onclick = (e) => { e.stopPropagation(); this.#toggleCC(); };
 
             // Settings Menu
             E.settingsBtn.onclick = (e) => { e.stopPropagation(); this.#toggleMenu(); };
-            this.#container.querySelectorAll('.gplr-menu-back').forEach(b => b.onclick = () => this.#navigateMenu(0));
-            this.#container.querySelector('#gplr-booster').onclick = () => this.#toggleBooster();
-            this.#container.querySelector('#gplr-ambient').onclick = () => this.#toggleAmbient();
+            this.#container.querySelectorAll('.gplr-menu-back').forEach(b => b.onclick = (e) => { e.stopPropagation(); this.#navigateMenu(0); });
+            this.#container.querySelector('#gplr-booster').onclick = (e) => { e.stopPropagation(); this.#toggleBooster(); };
+            this.#container.querySelector('#gplr-ambient').onclick = (e) => { e.stopPropagation(); this.#toggleAmbient(); };
             
             // Scrubbing
             const handleScrub = (e) => this.#handleScrub(e);
@@ -363,6 +366,7 @@
             };
             
             E.timeline.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
                 this.#isScrubbing = true;
                 this.#wasPausedBeforeScrub = V.paused;
                 V.pause();
@@ -372,6 +376,7 @@
             });
             
             E.timeline.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
                 this.#isScrubbing = true;
                 this.#wasPausedBeforeScrub = V.paused;
                 V.pause();
@@ -386,18 +391,24 @@
             // Volume Slide
             const handleVol = (e) => {
                 const rect = E.volSlider.getBoundingClientRect();
+                // Fix division by zero if hidden
+                if (rect.width === 0) return;
                 const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
                 V.volume = Math.max(0, Math.min(1, x / rect.width));
                 V.muted = V.volume === 0;
             };
-            E.volSlider.addEventListener('mousedown', (e) => { handleVol(e); document.addEventListener('mousemove', handleVol); document.addEventListener('mouseup', () => document.removeEventListener('mousemove', handleVol), {once:true}); });
+            E.volSlider.addEventListener('mousedown', (e) => { 
+                e.stopPropagation(); 
+                handleVol(e); 
+                document.addEventListener('mousemove', handleVol); 
+                document.addEventListener('mouseup', () => document.removeEventListener('mousemove', handleVol), {once:true}); 
+            });
 
             // UX Interaction
             this.#container.addEventListener('mousemove', () => this.#showControls());
             this.#container.addEventListener('mouseleave', () => this.#hideControls());
-            this.#container.addEventListener('click', (e) => { if(e.target===this.#container) this.#togglePlay(); });
             
-            // Double Tap / Keyboard
+            // Double Tap / Keyboard / Click
             this.#setupInputs();
         }
 
@@ -406,6 +417,12 @@
             this.#container.addEventListener('keydown', (e) => {
                 if(e.target.closest('input')) return;
                 const k = e.key.toLowerCase();
+                
+                // Prevent default scrolling behavior for player keys
+                if([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'k', 'f', 'm'].includes(k)) {
+                    e.preventDefault();
+                }
+
                 if([' ', 'k'].includes(k)) this.#togglePlay();
                 if(k === 'f') this.#toggleFullscreen();
                 if(k === 'm') this.#toggleMute();
@@ -415,33 +432,42 @@
                 if(k === 'arrowdown') this.#video.volume = Math.max(0, this.#video.volume - 0.1);
             });
 
-            // Double Tap Zone
+            // Unified Click & Double Tap Logic
             let lastTap = 0;
-            const handleTap = (e, dir) => {
-                const now = new Date().getTime();
-                if (now - lastTap < 300) {
-                    // Double tap detected
-                    e.stopPropagation(); e.preventDefault();
-                    this.#seek(dir * 10);
-                    this.#ripple(dir === 1 ? 'right' : 'left');
-                } else {
-                    if(this.#isTouch && e.target === this.#video) this.#showControls();
-                }
-                lastTap = now;
-            };
             
-            // Overlay invisible tap zones for touch/mouse
+            const handleTap = (dir) => {
+                this.#seek(dir * 10);
+                this.#ripple(dir === 1 ? 'right' : 'left');
+            };
+
             this.#container.addEventListener('click', (e) => {
+                const target = e.target;
+                // Ignore clicks if they originated from specific controls
+                if (target.closest('button') || target.closest('.gplr-timeline-container') || target.closest('.gplr-vol-container')) return;
+
                 const width = this.#container.clientWidth;
                 const x = e.offsetX;
-                if (x < width * 0.3) handleTap(e, -1);
-                else if (x > width * 0.7) handleTap(e, 1);
+                const now = new Date().getTime();
+                const isDoubleTap = (now - lastTap < 300);
+                lastTap = now;
+
+                if (x < width * 0.3) {
+                    // Left Zone
+                    if (isDoubleTap) handleTap(-1);
+                    else this.#showControls();
+                } else if (x > width * 0.7) {
+                    // Right Zone
+                    if (isDoubleTap) handleTap(1);
+                    else this.#showControls();
+                } else {
+                    // Center Zone - Toggle Play
+                    this.#togglePlay();
+                }
             });
         }
 
         #setupMediaSession() {
             if (!('mediaSession' in navigator)) return;
-            // Basic support, can be enhanced by reading metadata tags on the page
             navigator.mediaSession.setActionHandler('play', () => this.#togglePlay());
             navigator.mediaSession.setActionHandler('pause', () => this.#togglePlay());
             navigator.mediaSession.setActionHandler('seekbackward', () => this.#seek(-10));
@@ -520,6 +546,10 @@
             }
         }
 
+        #toggleMute() {
+            this.#video.muted = !this.#video.muted;
+        }
+
         #showControls() {
             this.#container.classList.add('controls-visible');
             this.#container.classList.remove('no-cursor');
@@ -571,6 +601,7 @@
         // --- 4. Features (Booster, Ambient, Menus) ---
 
         async #toggleBooster() {
+            // Error Handling for CORS/Security restrictions
             if(!this.#mediaSource) {
                 try {
                     const AC = window.AudioContext || window.webkitAudioContext;
@@ -580,10 +611,16 @@
                     this.#mediaSource = ctx.createMediaElementSource(this.#video);
                     this.#boosterGainNode = ctx.createGain();
                     this.#mediaSource.connect(this.#boosterGainNode).connect(ctx.destination);
-                } catch(e) { return; }
+                } catch(e) { 
+                    console.error("GokuPlr Booster Error:", e);
+                    this.#showToast('Booster Error: Security/CORS restriction');
+                    return; 
+                }
             }
             this.#isBoosterActive = !this.#isBoosterActive;
-            this.#boosterGainNode.gain.value = this.#isBoosterActive ? this.#BOOSTER_MULTIPLIER : 1;
+            if (this.#boosterGainNode) {
+                this.#boosterGainNode.gain.value = this.#isBoosterActive ? this.#BOOSTER_MULTIPLIER : 1;
+            }
             this.#updateVal('#gplr-booster', this.#isBoosterActive ? 'On' : 'Off');
             this.#showToast(`Volume Booster: ${this.#isBoosterActive ? 'ON' : 'OFF'}`);
         }
@@ -595,6 +632,23 @@
             if(active && !this.#video.paused) this.#loop(); // Restart loop if needed
         }
 
+        #toggleCC() {
+             const tracks = Array.from(this.#video.textTracks).filter(t => t.kind !== 'metadata');
+             if (tracks.length === 0) return;
+             
+             // Simple toggle for main button: If any are showing, turn off. If none, turn on first.
+             const anyShowing = tracks.some(t => t.mode === 'showing');
+             if (anyShowing) {
+                 tracks.forEach(t => t.mode = 'hidden');
+                 this.#elements.ccBtn.classList.remove('active');
+                 this.#updateVal('[data-target="captions"]', 'Off');
+             } else {
+                 tracks[0].mode = 'showing';
+                 this.#elements.ccBtn.classList.add('active');
+                 this.#updateVal('[data-target="captions"]', tracks[0].label || 'On');
+             }
+        }
+
         #populateMenus() {
             // Speed
             const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -604,7 +658,8 @@
                 const btn = document.createElement('button');
                 btn.className = 'gplr-menu-item';
                 btn.innerHTML = `<span>${s}x</span>${s===1?'<svg viewBox="0 0 24 24" style="width:16px;fill:var(--gplr-primary)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>':''}`;
-                btn.onclick = () => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
                     this.#video.playbackRate = s;
                     this.#updateVal('[data-target="speed"]', s + 'x');
                     this.#navigateMenu(0);
@@ -621,7 +676,8 @@
             const offBtn = document.createElement('button');
             offBtn.className = 'gplr-menu-item';
             offBtn.textContent = 'Off';
-            offBtn.onclick = () => {
+            offBtn.onclick = (e) => {
+                e.stopPropagation();
                 tracks.forEach(t => t.mode = 'hidden');
                 this.#updateVal('[data-target="captions"]', 'Off');
                 this.#elements.ccBtn.classList.remove('active');
@@ -633,7 +689,8 @@
                 const btn = document.createElement('button');
                 btn.className = 'gplr-menu-item';
                 btn.textContent = t.label || `Track ${i+1}`;
-                btn.onclick = () => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
                     tracks.forEach(tr => tr.mode = 'hidden');
                     t.mode = 'showing';
                     this.#updateVal('[data-target="captions"]', t.label || 'On');
@@ -725,7 +782,7 @@
         }
 
         #fmtTime(s) {
-            if (isNaN(s)) return '0:00';
+            if (isNaN(s) || !isFinite(s)) return '0:00';
             const date = new Date(s * 1000);
             const str = date.toISOString().substr(11, 8);
             return str.startsWith('00:') ? str.substr(3) : str;
@@ -735,7 +792,7 @@
             const vol = JSON.parse(localStorage.getItem(CustomVideoPlayer.#KEYS.VOLUME));
             if(vol) { this.#video.volume = vol.v; this.#video.muted = vol.m; }
             this.#container.querySelectorAll('[data-target]').forEach(btn => {
-                btn.onclick = () => this.#navigateMenu(btn.dataset.target);
+                btn.onclick = (e) => { e.stopPropagation(); this.#navigateMenu(btn.dataset.target); };
             });
         }
     }
