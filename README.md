@@ -102,6 +102,10 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
           <!-- Video quality sources -->
           <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
           
+          <!-- Captions -->
+          <track kind="subtitles" label="English" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" default>
+          <track kind="subtitles" label="Spanish" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captionses.vtt">
+          
           <!-- VTT Thumbnail track for high-performance previews -->
           <track kind="metadata" label="thumbnails" src="https://archive.org/download/BigBuckBunny_328/BigBuckBunny_328_thumbnails.vtt" />
         </video>
