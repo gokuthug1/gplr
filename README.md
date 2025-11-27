@@ -2,7 +2,7 @@
 
 # GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.4.1)
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.4.3)
 
 GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful, feature-rich, and mobile-friendly player. It's designed for easy integration, high performance, and extensive customization with a modern **Glassmorphism** design.
 
@@ -21,6 +21,9 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 ---
 
 ## Changelog
+
+### v2.4.3
+- **Mobile settings size change**
 
 ### v2.4.2
 - **Mobile Controls Fixed**
@@ -80,7 +83,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.4.2</title>
+    <title>GokuPlr v2.4.3</title>
     <style>
         body {
             background-color: #111;
@@ -120,7 +123,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
     </div>
 
     <!-- Make sure to use the latest version -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.4.2/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.4.3/plr.js" defer></script>
 
 </body>
 </html>
