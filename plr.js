@@ -1,5 +1,3 @@
---- START OF FILE gplr.js ---
-
 /**
  * GokuPlr v2.4.2
  * A modern, feature-rich, and customizable HTML5 video player.
