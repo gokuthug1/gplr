@@ -1,8 +1,10 @@
+--- START OF FILE gplr.js ---
+
 /**
- * GokuPlr v2.4.1
+ * GokuPlr v2.4.2
  * A modern, feature-rich, and customizable HTML5 video player.
  * Improvements: Fixed Seek SVGs, Organized Settings, Optimized Download.
- * Fixes: Fixed DOM stacking order (Controls visibility), Added Mobile Touch-to-Show logic.
+ * Fixes: Fixed Mobile "Tap to Show" bug by isolating mouse vs touch hover events.
  */
 
 (function() {
@@ -13,7 +15,7 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.4.1';
+        static #version = '2.4.2';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
         static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
@@ -302,8 +304,6 @@
                     </div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', playerHtml);
-            // Removed: container.appendChild(this.#video) from here. 
-            // It is now done before inserting HTML to ensure UI layers are on top.
         }
 
         #selectDOMElements() {
@@ -433,7 +433,15 @@
 
         #attachContainerListeners() {
             this.#container.addEventListener('keydown', this.#handleKeydown.bind(this));
-            this.#container.addEventListener('mousemove', this.#showControls.bind(this));
+            
+            // FIX: Using pointermove instead of mousemove.
+            // Only trigger showControls if the pointer is actually a mouse.
+            // This prevents touch "ghost" mousemoves from showing controls immediately before a click,
+            // which causes the click handler to think they are already visible and hide them.
+            this.#container.addEventListener('pointermove', (e) => {
+                if (e.pointerType === 'mouse') this.#showControls();
+            });
+
             this.#container.addEventListener('mouseleave', () => this.#hideControls());
             this.#container.addEventListener('click', this.#handleContainerClick.bind(this));
             this.#container.addEventListener('dblclick', this.#handleDoubleClick.bind(this));
@@ -525,20 +533,19 @@
         
         #handleContainerClick(e) {
             if (e.target !== this.#container && e.target !== this.#video) return;
-            const controlsVisible = this.#videoControls.classList.contains('visible');
             
-            // FIX: Mobile/Touch logic. If controls are hidden, tapping must show them (no mousemove on mobile).
-            if (!controlsVisible) {
-                this.#showControls();
-            } else {
-                // If controls are visible:
-                // On touch: Hide them (toggle UI)
-                // On desktop: Toggle play/pause
-                if (this.#isTouch) {
+            // FIX: Robust Mobile/Touch logic.
+            // On Touch: Tap always toggles UI visibility.
+            // On Desktop: Click toggles Play/Pause (hover handles visibility).
+            // We use the pointermove fix in listeners to ensure logic doesn't conflict.
+            if (this.#isTouch) {
+                if (this.#videoControls.classList.contains('visible')) {
                     this.#hideControls(true);
                 } else {
-                    this.#togglePlay();
+                    this.#showControls();
                 }
+            } else {
+                this.#togglePlay();
             }
         }
 
