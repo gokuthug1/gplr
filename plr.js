@@ -1,7 +1,8 @@
 /**
- * GokuPlr v2.4
+ * GokuPlr v2.4.1
  * A modern, feature-rich, and customizable HTML5 video player.
- * Improvements: Fixed Seek SVGs, Organized Settings Categories, Removed ARIA, Optimized Download.
+ * Improvements: Fixed Seek SVGs, Organized Settings, Optimized Download.
+ * Fixes: Fixed DOM stacking order (Controls visibility), Added Mobile Touch-to-Show logic.
  */
 
 (function() {
@@ -12,7 +13,7 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.4';
+        static #version = '2.4.1';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
         static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
@@ -56,14 +57,13 @@
         #ambientCanvas; #ambientCtx; #ambientModeToggle; #ambientStatus;
         #airplayBtn; #castBtn;
 
-        // Fixed Icons (Removed ARIA, Fixed Seek Geometry)
+        // Fixed Icons
         #ICON_PATHS = {
             play: 'M8 5v14l11-7z',
             pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
             volumeUp: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z',
             volumeDown: 'M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z',
             muted: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
-            // Corrected Symmetrical Circular Arrows
             seekForward: 'M12 5V1L17 6l-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6H20c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z',
             seekBackward: 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z'
         };
@@ -100,18 +100,19 @@
                 .video-player-container:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
                 .video-player-container.no-cursor { cursor: none; }
                 .video-player-container.fullscreen { width: 100%; height: 100%; border-radius: 0; aspect-ratio: auto; }
+                /* Ensure video is z-index 1 so controls (z-index 10) are always clickable */
                 .video-player-container video { width: 100%; height: 100%; display: block; position: relative; z-index: 1; }
                 
-                /* Ambient Mode */
-                .ambient-canvas { position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; filter: blur(40px) brightness(1.2); opacity: 0; transition: opacity 0.4s ease-in-out; z-index: 0; }
+                /* Ambient Mode - z-index 0 to stay behind video */
+                .ambient-canvas { position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; filter: blur(40px) brightness(1.2); opacity: 0; transition: opacity 0.4s ease-in-out; z-index: 0; pointer-events: none; }
                 .video-player-container.ambient-mode-on.playing .ambient-canvas { opacity: 0.6; }
 
                 /* Captions */
                 .video-player-container video::cue { background-color: var(--caption-bg-color, rgba(0,0,0,0.75)); color: var(--caption-font-color, #fff); font-size: var(--caption-font-size, 22px); font-family: var(--caption-font-family, sans-serif); transition: bottom var(--transition-speed); bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
                 .video-player-container.controls-visible.captions-on video::cue { bottom: 85px; }
                 
-                /* Controls Overlay */
-                .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); opacity: 0; visibility: hidden; transition: opacity var(--transition-speed), visibility var(--transition-speed); z-index: 2; }
+                /* Controls Overlay - High Z-Index to ensure visibility */
+                .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); opacity: 0; visibility: hidden; transition: opacity var(--transition-speed), visibility var(--transition-speed); z-index: 10; pointer-events: auto; }
                 .video-player-container .video-controls.visible { opacity: 1; visibility: visible; }
                 .controls-bottom { display: flex; align-items: center; gap: 10px; }
                 .controls-left, .controls-right { display: flex; align-items: center; gap: 10px; }
@@ -141,7 +142,7 @@
                 .progress-bar-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--text-color); position: absolute; right: 0; top: 50%; transform: translate(50%, -50%) scale(0); box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: transform var(--transition-speed); }
                 .progress-bar-container:hover .progress-bar-thumb { transform: translate(50%, -50%) scale(1); }
                 .progress-bar-container:hover .progress-bar { height: 6px; }
-                .seek-tooltip { position: absolute; bottom: 45px; left: 0; background: var(--tooltip-bg); border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px; border-radius: var(--border-radius); display: none; transform: translateX(-50%); text-align: center; color: var(--text-color); font-size: 12px; z-index: 3; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+                .seek-tooltip { position: absolute; bottom: 45px; left: 0; background: var(--tooltip-bg); border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px; border-radius: var(--border-radius); display: none; transform: translateX(-50%); text-align: center; color: var(--text-color); font-size: 12px; z-index: 15; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
                 .seek-tooltip canvas { width: 160px; height: 90px; border-radius: 4px; margin-bottom: 4px; background-color: #111; display: block; }
 
                 /* Volume Slider */
@@ -154,17 +155,17 @@
                 .time-display { color: var(--text-color); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; user-select: none; margin-left: 5px; }
                 
                 /* Big Play & Indicator */
-                .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.3); border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 1; padding: 20px; border-radius: 50%; }
+                .big-play-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.3); border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, opacity 0.2s; opacity: 1; z-index: 5; padding: 20px; border-radius: 50%; }
                 .big-play-button:hover { transform: translate(-50%, -50%) scale(1.1); background: rgba(0,0,0,0.5); }
                 .big-play-button:hover svg { fill: var(--primary-color); }
                 .big-play-button svg { width: 64px; height: 64px; fill: var(--text-color); }
                 .video-player-container.playing .big-play-button { opacity: 0; pointer-events: none; }
-                .player-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(20, 20, 20, 0.7); padding: 20px; border-radius: 50%; opacity: 0; transition: opacity 0.2s, transform 0.1s; pointer-events: none; z-index: 3; backdrop-filter: blur(4px); }
+                .player-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(20, 20, 20, 0.7); padding: 20px; border-radius: 50%; opacity: 0; transition: opacity 0.2s, transform 0.1s; pointer-events: none; z-index: 20; backdrop-filter: blur(4px); }
                 .player-indicator.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 .player-indicator .indicator-icon { width: 40px; height: 40px; fill: #fff; display: block; }
 
                 /* Settings Menu */
-                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 15px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+                .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 15px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); z-index: 25; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
                 .menu-panel { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
@@ -222,8 +223,10 @@
             this.#container = container;
             this.#video.parentNode.insertBefore(container, this.#video);
             
-            // Note: ARIA labels removed as requested.
-            // Menu organized into logical categories.
+            // FIX: Append video FIRST so it sits behind the controls layer in DOM order.
+            // This ensures controls are physically on top for event handling.
+            container.appendChild(this.#video);
+
             const playerHtml = `
                 <canvas class="ambient-canvas"></canvas>
                 <video class="thumbnail-video" muted playsinline style="display: none;" crossorigin="anonymous"></video>
@@ -299,7 +302,8 @@
                     </div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', playerHtml);
-            container.appendChild(this.#video);
+            // Removed: container.appendChild(this.#video) from here. 
+            // It is now done before inserting HTML to ensure UI layers are on top.
         }
 
         #selectDOMElements() {
@@ -521,8 +525,21 @@
         
         #handleContainerClick(e) {
             if (e.target !== this.#container && e.target !== this.#video) return;
-            if (this.#videoControls.classList.contains('visible')) this.#hideControls(true);
-            else this.#togglePlay();
+            const controlsVisible = this.#videoControls.classList.contains('visible');
+            
+            // FIX: Mobile/Touch logic. If controls are hidden, tapping must show them (no mousemove on mobile).
+            if (!controlsVisible) {
+                this.#showControls();
+            } else {
+                // If controls are visible:
+                // On touch: Hide them (toggle UI)
+                // On desktop: Toggle play/pause
+                if (this.#isTouch) {
+                    this.#hideControls(true);
+                } else {
+                    this.#togglePlay();
+                }
+            }
         }
 
         #handleDoubleClick(e) {
