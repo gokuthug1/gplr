@@ -22,6 +22,10 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ## Changelog
 
+### v2.4.2
+- **Mobile Controls Fixed**
+- **More resizing**
+
 ### v2.4.1 (Hotfix)
 -   **Critical Fix:** Resolved a DOM stacking order issue where controls were not clickable or visible in non-fullscreen modes.
 -   **Mobile Logic:** Fixed touch interactions. Tapping the video on mobile now correctly reveals the controls if they are hidden, rather than immediately toggling playback.
@@ -76,7 +80,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.4.1</title>
+    <title>GokuPlr v2.4.2</title>
     <style>
         body {
             background-color: #111;
@@ -116,7 +120,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
     </div>
 
     <!-- Make sure to use the latest version -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.4.1/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.4.2/plr.js" defer></script>
 
 </body>
 </html>
