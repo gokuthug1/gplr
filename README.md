@@ -2,7 +2,7 @@
 
 # GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.4)
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.4.1)
 
 GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful, feature-rich, and mobile-friendly player. It's designed for easy integration, high performance, and extensive customization with a modern **Glassmorphism** design.
 
@@ -22,7 +22,11 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ## Changelog
 
-### v2.3.7
+### v2.4.1 (Hotfix)
+-   **Critical Fix:** Resolved a DOM stacking order issue where controls were not clickable or visible in non-fullscreen modes.
+-   **Mobile Logic:** Fixed touch interactions. Tapping the video on mobile now correctly reveals the controls if they are hidden, rather than immediately toggling playback.
+
+### v2.4.0
 -   **UX Improvement:** The Settings Menu is now organized into logical categories (**Playback**, **Audio**, **Display**) for easier navigation.
 -   **Optimization:** Significant file size reduction (~8KB) by stripping ARIA attributes and simplifying DOM logic.
 -   **Performance:** Refactored the Download feature to use a lightweight anchor method, fixing memory crashes on large files.
@@ -72,7 +76,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.4</title>
+    <title>GokuPlr v2.4.1</title>
     <style>
         body {
             background-color: #111;
@@ -111,7 +115,8 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
         </video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.4/plr.js" defer></script>
+    <!-- Make sure to use the latest version -->
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@2.4.1/plr.js" defer></script>
 
 </body>
 </html>
@@ -123,7 +128,8 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
 
 | Gesture                       | Action                               |
 | :---------------------------- | :----------------------------------- |
-| Single Tap                    | Toggle Play/Pause or Show UI         |
+| Single Tap (Controls Hidden)  | Show Controls                        |
+| Single Tap (Controls Visible) | Play/Pause (Desktop) / Hide (Mobile) |
 | Double Tap (Left/Right Side)  | Seek -10s / +10s                     |
 | Double Tap (Center)           | Toggle Fullscreen                    |
 | Drag on Progress Bar          | Scrub through video                  |
