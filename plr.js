@@ -1,8 +1,8 @@
 /**
- * GokuPlr v2.4.2
+ * GokuPlr v2.4.3
  * A modern, feature-rich, and customizable HTML5 video player.
  * Improvements: Fixed Seek SVGs, Organized Settings, Optimized Download.
- * Fixes: Fixed Mobile "Tap to Show" bug by isolating mouse vs touch hover events.
+ * Fixes: Fixed Mobile "Tap to Show" logic, Resized Settings Menu for Mobile.
  */
 
 (function() {
@@ -13,7 +13,7 @@
 
     class CustomVideoPlayer {
         // --- Static Properties ---
-        static #version = '2.4.2';
+        static #version = '2.4.3';
         static #PLAYER_SETTINGS_KEY = 'gplr-settings';
         static #PLAYER_VOLUME_KEY = 'gplr-volume';
         static #PLAYER_SPEED_KEY = 'gplr-speed';
@@ -164,7 +164,7 @@
                 .player-indicator.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 .player-indicator .indicator-icon { width: 40px; height: 40px; fill: #fff; display: block; }
 
-                /* Settings Menu */
+                /* Settings Menu (PC Default) */
                 .settings-menu .menu-content { position: absolute; bottom: 100%; right: 0; margin-bottom: 15px; background: var(--menu-bg); border-radius: var(--border-radius); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); z-index: 25; }
                 .settings-menu .menu-content.visible { opacity: 1; visibility: visible; transform: translateY(0); }
                 .menu-panels-wrapper { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -209,7 +209,12 @@
                     .volume-slider { width: 50px; } 
                     .time-display { font-size: 12px; } 
                     .control-button svg { width: 22px; height: 22px; } 
-                    .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; } 
+                    .video-player-container.controls-visible.captions-on video::cue { bottom: 70px; }
+                    /* Resize Settings Menu for Mobile */
+                    .settings-menu .menu-content { width: 210px; }
+                    .menu-item { padding: 9px 10px; font-size: 12px; }
+                    .menu-item-value { font-size: 12px; }
+                    .menu-header { padding: 8px; font-size: 13px; }
                 }
             `;
             document.head.appendChild(style);
