@@ -112,7 +112,7 @@
                 .video-player-container.controls-visible.captions-on video::cue { bottom: 95px; }
                 
                 /* Controls Overlay - Enhanced Glassmorphism */
-                .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 14px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.4), transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; visibility: hidden; transition: opacity var(--transition-speed), visibility var(--transition-speed); z-index: 10; pointer-events: auto; }
+                .video-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 14px; display: flex; flex-direction: column; background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.4), transparent); opacity: 0; visibility: hidden; transition: opacity var(--transition-speed), visibility var(--transition-speed); z-index: 10; pointer-events: auto; }
                 .video-player-container .video-controls.visible { opacity: 1; visibility: visible; }
                 .controls-bottom { display: flex; align-items: center; gap: 12px; }
                 .controls-left, .controls-right { display: flex; align-items: center; gap: 12px; }
