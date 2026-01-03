@@ -2,7 +2,7 @@
 
 # GokuPlr - A Modern HTML5 Video Player
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.4.3)
+![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.5.0)
 
 GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful, feature-rich, and mobile-friendly player. It's designed for easy integration, high performance, and extensive customization with a modern **Glassmorphism** design.
 
@@ -21,6 +21,14 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 ---
 
 ## Changelog
+
+### v2.5.0
+-   **UI/UX Enhancement:** Optimized touch target sizes to WCAG AA standards (44×44px minimum) for better accessibility and mobile usability.
+-   **Visual Upgrade:** Enhanced glassmorphism effects with improved backdrop blur and saturation for a more premium look.
+-   **Design Improvements:** Better contrast ratios, improved spacing, enhanced progress bar visibility, and refined visual feedback.
+-   **Error Handling:** Added comprehensive error handling for canvas operations, video source setup, and download functionality.
+-   **Accessibility:** Improved touch interactions, better visual contrast, and enhanced mobile experience with optimized breakpoints.
+-   **Performance:** Optimized canvas operations and improved error resilience for smoother playback.
 
 ### v2.4.3
 - **Mobile settings size change**
@@ -57,7 +65,8 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 
 ## Features
 
--   **Glassmorphism Design:** Modern, translucent UI elements with blur effects.
+-   **Glassmorphism Design:** Modern, translucent UI elements with enhanced blur effects and premium visual polish.
+-   **WCAG AA Compliant:** Optimized touch targets (44×44px minimum) for improved accessibility and mobile usability.
 -   **Categorized Settings:** Organized menu for Quality, Speed, Audio, and Captions.
 -   **Ambient Mode:** Immersive colored glow matching video content.
 -   **Volume Booster:** Boost volume up to 200% via Web Audio API.
@@ -67,6 +76,7 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 -   **Advanced Captions:** Multi-language support with customizable styling (Font, Color, Background).
 -   **Download Support:** Built-in download button (supports local and CORS-enabled remote files).
 -   **Persistent Settings:** Remembers volume, speed, and caption preferences.
+-   **Robust Error Handling:** Comprehensive error handling for reliable playback across all scenarios.
 -   **No Dependencies:** Pure ES6+ JavaScript.
 
 ---
@@ -83,7 +93,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.4.3</title>
+    <title>GokuPlr v2.5.0</title>
     <style>
         body {
             background-color: #111;
@@ -123,7 +133,7 @@ To use GokuPlr, add the `gplr` (or `goku-player`, `video`, `vp`) class to your `
     </div>
 
     <!-- Make sure to use the latest version -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.4.3/plr.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.5.0/plr.js" defer></script>
 
 </body>
 </html>
@@ -181,7 +191,7 @@ You can override these standard variables in your CSS to match your brand.
     --menu-bg: rgba(25, 25, 25, 0.95);
     
     /* Background for the empty part of progress/volume bars */
-    --progress-bar-bg: rgba(255, 255, 255, 0.25);
+    --progress-bar-bg: rgba(255, 255, 255, 0.3);
     
     /* Font family used in the player */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
