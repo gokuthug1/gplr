@@ -1,5 +1,5 @@
 /**
- * GokuPlr v2.5.1
+ * GokuPlr v2.5.2
  * Enterprise-grade, lightweight HTML5 video player wrapper.
  * 
  * @license MIT
