@@ -1,10 +1,10 @@
----
+# GokuPlr - Ultimate HTML5 Video Player
 
-# GokuPlr - A Modern HTML5 Video Player
+![Version](https://img.shields.io/badge/version-3.0.0-blue.svg) ![Size](https://img.shields.io/badge/size-39KB-green.svg) ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
-![jsDelivr](https://data.jsdelivr.com/v1/package/gh/gokuthug1/gplr/badge?version=2.5.2)
+**GokuPlr v3.0.0** is the definitive HTML5 video player wrapper. It combines enterprise-grade performance with a stunning Glassmorphism UI. 
 
-GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgrades standard HTML5 `<video>` elements into a beautiful, feature-rich, and mobile-friendly player. It's designed for easy integration, high performance, and extensive customization with a modern **Glassmorphism** design.
+By utilizing modern JavaScript architecture (ES6+ classes, event delegation, and template literals), v3.0.0 delivers **more features** than previous versions while cutting the file size by **nearly 50%**.
 
 ---
 
@@ -13,64 +13,50 @@ GokuPlr is a lightweight, dependency-free JavaScript library that instantly upgr
 - [Changelog](#changelog)
 - [Features](#features)
 - [Quick Start](#quick-start)
-- [Touch Gestures](#touch-gestures)
+- [Advanced Configuration](#advanced-configuration)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
-- [Theming with CSS Variables](#theming-with-css-variables)
+- [Theming](#theming)
 - [License](#license)
 
 ---
 
 ## Changelog
 
-### v2.5.2 (Major Refactor)
--   **Performance Overhaul:** Complete architectural refactor resulting in a **40% reduction in file size (~40KB)** while maintaining all features.
--   **Optimization:** Replaced repetitive DOM logic with event delegation and dynamic HTML generation.
--   **Theming System:** Updated CSS variables to use the `--gplr-` prefix to prevent conflicts with host page styles.
--   **Memory Efficiency:** Improved garbage collection for event listeners and canvas elements.
--   **Accessibility:** Enhanced keyboard navigation (`Tab` index) and added ARIA labels for screen readers.
+### v3.0.0 (The Ultimate Update)
+-   **Architecture Overhaul:** Merged the robust feature set of v2.5.0 with the high-performance engine of v2.5.2.
+-   **Massive Size Reduction:** Reduced file size to **~39KB** by replacing verbose DOM construction with efficient template literals.
+-   **New Features:**
+    -   **Advanced Caption Styling:** Users can now customize caption color, background, font, and size directly from the player.
+    -   **AirPlay & Chromecast:** Native support added (buttons appear when available).
+    -   **Audio Booster:** Re-engineered using a Singleton AudioContext to prevent browser resource limits.
+    -   **Smart VTT:** Improved thumbnail parsing for sprites.
+-   **Performance:** Implemented `AbortController` for zero-memory-leak destruction and throttled `requestAnimationFrame` loops for Ambient Mode to save battery.
 
-### v2.5.1
--   **UI/UX Enhancement:** Optimized touch target sizes to WCAG AA standards (44×44px minimum).
--   **Visual Upgrade:** Enhanced glassmorphism effects with improved backdrop blur.
--   **Design Improvements:** Better contrast ratios and enhanced progress bar visibility.
--   **Error Handling:** Added robust handling for canvas operations and source setup.
-
-### v2.4.x
--   **v2.4.3:** Mobile settings sizing adjustments.
--   **v2.4.2:** Fixed mobile control visibility logic.
--   **v2.4.1:** Resolved DOM stacking order issues; fixed mobile tap-to-show interactions.
--   **v2.4.0:** Organized Settings Menu (Playback, Audio, Display); reduced file size by stripping redundant ARIA attributes; refactored Download feature.
-
-### v2.3.x
--   **Glassmorphism UI:** Complete visual overhaul.
--   **Ambient Mode:** Immersive glowing background effect.
--   **Volume Booster:** Boost audio up to 200%.
--   **VTT Thumbnails:** High-performance hover previews via sprite sheets.
+### v2.5.2
+-   Major refactor focusing on mobile touch targets and event delegation.
 
 ---
 
 ## Features
 
--   **Ultra Lightweight:** ~40KB (minified), no dependencies.
--   **Glassmorphism Design:** Modern, translucent UI with backdrop filters.
--   **Ambient Mode:** Immersive colored glow matching video content (Ambilight effect).
--   **Volume Booster:** Boost volume up to 200% via Web Audio API.
--   **VTT Thumbnails:** Instant hover previews via sprite sheets.
--   **Accessibility:** WCAG AA compliant touch targets and keyboard navigation.
--   **Mobile First:** Optimized touch gestures, tap-to-toggle UI, and draggable sliders.
--   **Smart Double-Tap:** Double-tap sides to seek; double-tap center for fullscreen.
--   **Video Quality Switching:** Support for multiple `<source>` resolutions.
--   **Advanced Captions:** Multi-language support with customizable styling.
--   **Download Support:** Built-in safe download button (supports local and CORS-enabled remote files).
--   **Persistent Settings:** Remembers volume, speed, and caption preferences.
+-   **🪶 Ultra Lightweight:** Only ~39KB. No dependencies (jQuery-free).
+-   **🎨 Glassmorphism UI:** Beautiful, translucent controls with backdrop blur.
+-   **🔊 Audio Booster:** Boost volume up to **250%** via Web Audio API.
+-   **💡 Ambient Mode:** Ambilight-style glow effect that reacts to video content.
+-   **🖼️ VTT Thumbnails:** High-performance hover previews via sprite sheets.
+-   **📝 Advanced Captions:** Multi-track support with user-customizable styling (Color, Size, Font).
+-   **📺 Casting:** Built-in support for Apple AirPlay and Google Cast.
+-   **📱 Mobile Optimized:** 44px+ touch targets, swipe gestures, and passive event listeners.
+-   **⚙️ Persistence:** Remembers volume, speed, caption preferences, and styles across sessions.
+-   **📥 Download Manager:** Smart download button handling CORS and blob URLs.
 
 ---
 
 ## Quick Start
 
-To use GokuPlr, add the `gplr` class to your `<video>` tag and include the script.
+Simply add the `gplr` class to your `<video>` tag. The script automatically initializes any video with this class.
 
-### Full Page Example (`index.html`)
+### Basic Implementation
 
 ```html
 <!DOCTYPE html>
@@ -78,47 +64,37 @@ To use GokuPlr, add the `gplr` class to your `<video>` tag and include the scrip
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v2.5.2</title>
+    <title>GokuPlr v3.0.0</title>
     <style>
-        body {
-            background-color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .video-wrapper {
-            max-width: 900px;
-            width: 100%;
-            /* Optional: Enforce aspect ratio to prevent layout shift */
-            aspect-ratio: 16/9; 
-        }
+        body { background: #000; display: grid; place-items: center; height: 100vh; margin: 0; }
+        .player-wrapper { width: 100%; max-width: 900px; aspect-ratio: 16/9; }
     </style>
 </head>
 <body>
 
-    <div class="video-wrapper">
-        <video
-          class="gplr"
-          poster="https://archive.org/download/BigBuckBunny-1080p/big_buck_bunny_poster.jpg"
-          crossorigin="anonymous"
-          playsinline
+    <div class="player-wrapper">
+        <video 
+            class="gplr" 
+            poster="poster.png" 
+            crossorigin="anonymous" 
+            playsinline
         >
-          <!-- Video quality sources -->
-          <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" size="1080" data-label="1080p HD" default>
-          
-          <!-- Captions -->
+            <!-- Main Video Source -->
+            <source src="2160.mp4" type="video/mp4" data-quality="2160p">
+          <source src="1080.mp4" type="video/mp4" data-quality="1080p">
+          <source src="480.avi" type="video/avi" data-quality="480p">
+            
+            <!-- Captions -->
           <track kind="subtitles" label="English" srclang="en" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captions.vtt" default>
           <track kind="subtitles" label="Spanish" srclang="es" src="https://raw.githubusercontent.com/tnb1j/-/refs/heads/main/captionses.vtt">
-          
-          <!-- VTT Thumbnail track for high-performance previews -->
-          <track kind="metadata" label="thumbnails" src="https://archive.org/download/BigBuckBunny_328/BigBuckBunny_328_thumbnails.vtt" />
+            
+            <!-- Thumbnail Preview (VTT) -->
+            <track kind="metadata" label="thumbnails" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Big.Buck.Bunny.-.Opening.Screen.png">
         </video>
     </div>
 
-    <!-- Make sure to use the latest version -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v2.5.2/plr.js" defer></script>
+    <!-- Load GokuPlr v3.0.0 -->
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v3.0.0/plr.js" defer></script>
 
 </body>
 </html>
@@ -126,57 +102,64 @@ To use GokuPlr, add the `gplr` class to your `<video>` tag and include the scrip
 
 ---
 
-## Touch Gestures
+## Advanced Configuration
 
-| Gesture                       | Action                               |
-| :---------------------------- | :----------------------------------- |
-| Single Tap (Controls Hidden)  | Show Controls                        |
-| Single Tap (Controls Visible) | Play/Pause (Desktop) / Hide (Mobile) |
-| Double Tap (Left/Right Side)  | Seek -10s / +10s                     |
-| Double Tap (Center)           | Toggle Fullscreen                    |
-| Drag on Progress Bar          | Scrub through video                  |
-| Drag on Volume Slider         | Adjust volume                        |
+### VTT Thumbnails
+To enable hover previews, include a track with `kind="metadata"` and `label="thumbnails"`. The VTT file should follow this format:
+
+```vtt
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+thumbs.jpg#xywh=0,0,160,90
+
+00:00:05.000 --> 00:00:10.000
+thumbs.jpg#xywh=160,0,160,90
+```
+*Note: `xywh` stands for x, y, width, height on the sprite sheet.*
+
+### Audio Booster & CORS
+For the Audio Booster and Ambient Mode to work, your video server must support CORS, and you must add `crossorigin="anonymous"` to the `<video>` tag.
 
 ---
 
 ## Keyboard Shortcuts
 
-| Key            | Action                                        |
-| :------------- | :-------------------------------------------- |
-| `Space` or `K` | Toggle Play/Pause                             |
-| `M`            | Toggle Mute/Unmute                            |
-| `F`            | Toggle Fullscreen                             |
-| `P`            | Toggle Picture-in-Picture                     |
-| `L` or `→`     | Seek Forward 5s                               |
-| `J` or `←`     | Seek Backward 5s                              |
-| `↑`            | Increase Volume by 10%                        |
-| `↓`            | Decrease Volume by 10%                        |
+| Key | Action |
+| :--- | :--- |
+| `Space` / `K` | Play / Pause |
+| `F` | Toggle Fullscreen |
+| `M` | Mute / Unmute |
+| `←` / `J` | Seek Backward 5s |
+| `→` / `L` | Seek Forward 5s |
+| `↑` | Volume Up |
+| `↓` | Volume Down |
 
 ---
 
-## Theming with CSS Variables
+## Theming
 
-You can override these variables in your CSS to match your brand. Note the updated variable names in v2.5.2.
+GokuPlr v3.0.0 uses simplified CSS variables. You can override these in your own CSS to match your branding.
 
 ```css
 :root {
-    /* The primary accent color (buttons, progress bar, active states) */
+    /* Main Accent Color */
     --gplr-primary: #ff4081;
     
-    /* Text color for icons and time */
-    --gplr-text: #ffffff;
+    /* Player Background (Glass effect base) */
+    --gplr-bg: rgba(20, 20, 20, 0.9);
     
-    /* The background gradient for the controls bar */
-    --gplr-bg: rgba(15, 15, 15, 0.85);
+    /* Text Color */
+    --gplr-txt: #ffffff;
     
-    /* Background color for menus (Settings, Quality, etc) */
-    --gplr-menu: rgba(25, 25, 25, 0.95);
+    /* Border Radius */
+    --gplr-rad: 8px;
     
-    /* Font family used in the player */
-    --gplr-font: 'Inter', system-ui, -apple-system, sans-serif;
-    
-    /* Border radius for the player container */
-    --gplr-radius: 8px;
+    /* Caption Defaults (Users can override these in settings) */
+    --cap-color: #ffffff;
+    --cap-bg: rgba(0, 0, 0, 0.8);
+    --cap-size: 20px;
+    --cap-font: sans-serif;
 }
 ```
 
@@ -184,5 +167,4 @@ You can override these variables in your CSS to match your brand. Note the updat
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
+This project is licensed under the MIT License.
