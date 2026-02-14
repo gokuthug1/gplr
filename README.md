@@ -1,10 +1,10 @@
 # GokuPlr - Ultimate HTML5 Video Player
 
-![Version](https://img.shields.io/badge/version-3.0.0-blue.svg) ![Size](https://img.shields.io/badge/size-39KB-green.svg) ![License](https://img.shields.io/badge/license-MIT-orange.svg)
+![Version](https://img.shields.io/badge/version-3.0.2-blue.svg) ![Size](https://img.shields.io/badge/size-~40KB-green.svg) ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
-**GokuPlr v3.0.0** is the definitive HTML5 video player wrapper. It combines enterprise-grade performance with a stunning Glassmorphism UI. 
+**GokuPlr v3.0.2** is the definitive HTML5 video player wrapper. It combines enterprise-grade performance with a stunning Glassmorphism UI. 
 
-By utilizing modern JavaScript architecture (ES6+ classes, event delegation, and template literals), v3.0.0 delivers **more features** than previous versions while cutting the file size by **nearly 50%**.
+By utilizing modern JavaScript architecture (ES6+ classes, event delegation, and template literals), v3.0.x delivers **more features** than previous versions while maintaining an incredibly small footprint.
 
 ---
 
@@ -22,24 +22,26 @@ By utilizing modern JavaScript architecture (ES6+ classes, event delegation, and
 
 ## Changelog
 
+### v3.0.2 (Hotfix)
+-   **Menu Fixes:** Resolved race conditions where settings menus (Speed, Quality, Captions) failed to populate if metadata loaded too quickly.
+-   **Layout Stability:** Fixed overflow and clipping issues within the settings menu on smaller screens.
+-   **State Management:** Improved navigation state handling when switching between sub-menus.
+
 ### v3.0.0 (The Ultimate Update)
 -   **Architecture Overhaul:** Merged the robust feature set of v2.5.0 with the high-performance engine of v2.5.2.
--   **Massive Size Reduction:** Reduced file size to **~39KB** by replacing verbose DOM construction with efficient template literals.
+-   **Massive Size Reduction:** Replaced verbose DOM construction with efficient template literals.
 -   **New Features:**
     -   **Advanced Caption Styling:** Users can now customize caption color, background, font, and size directly from the player.
-    -   **AirPlay & Chromecast:** Native support added (buttons appear when available).
+    -   **AirPlay & Chromecast:** Native support added (buttons appear automatically when available).
     -   **Audio Booster:** Re-engineered using a Singleton AudioContext to prevent browser resource limits.
     -   **Smart VTT:** Improved thumbnail parsing for sprites.
--   **Performance:** Implemented `AbortController` for zero-memory-leak destruction and throttled `requestAnimationFrame` loops for Ambient Mode to save battery.
-
-### v2.5.2
--   Major refactor focusing on mobile touch targets and event delegation.
+-   **Performance:** Implemented `AbortController` for zero-memory-leak destruction and throttled `requestAnimationFrame` loops for Ambient Mode.
 
 ---
 
 ## Features
 
--   **🪶 Ultra Lightweight:** Only ~39KB. No dependencies (jQuery-free).
+-   **🪶 Ultra Lightweight:** No dependencies (jQuery-free).
 -   **🎨 Glassmorphism UI:** Beautiful, translucent controls with backdrop blur.
 -   **🔊 Audio Booster:** Boost volume up to **250%** via Web Audio API.
 -   **💡 Ambient Mode:** Ambilight-style glow effect that reacts to video content.
@@ -64,7 +66,7 @@ Simply add the `gplr` class to your `<video>` tag. The script automatically init
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GokuPlr v3.0.0</title>
+    <title>GokuPlr v3.0.3</title>
     <style>
         body { background: #000; display: grid; place-items: center; height: 100vh; margin: 0; }
         .player-wrapper { width: 100%; max-width: 900px; aspect-ratio: 16/9; }
@@ -93,8 +95,8 @@ Simply add the `gplr` class to your `<video>` tag. The script automatically init
         </video>
     </div>
 
-    <!-- Load GokuPlr v3.0.0 -->
-    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v3.0.0/plr.js" defer></script>
+    <!-- Load GokuPlr v3.0.3 -->
+    <script src="https://cdn.jsdelivr.net/gh/gokuthug1/gplr@v3.0.3/plr.js" defer></script>
 
 </body>
 </html>
@@ -105,7 +107,7 @@ Simply add the `gplr` class to your `<video>` tag. The script automatically init
 ## Advanced Configuration
 
 ### VTT Thumbnails
-To enable hover previews, include a track with `kind="metadata"` and `label="thumbnails"`. The VTT file should follow this format:
+To enable hover previews, include a track with `kind="metadata"` and `label="thumbnails"`. The VTT file should follow this format (standard XYWH sprite mapping):
 
 ```vtt
 WEBVTT
@@ -116,10 +118,10 @@ thumbs.jpg#xywh=0,0,160,90
 00:00:05.000 --> 00:00:10.000
 thumbs.jpg#xywh=160,0,160,90
 ```
-*Note: `xywh` stands for x, y, width, height on the sprite sheet.*
+*Note: `xywh` stands for x, y, width, height on the sprite sheet image.*
 
 ### Audio Booster & CORS
-For the Audio Booster and Ambient Mode to work, your video server must support CORS, and you must add `crossorigin="anonymous"` to the `<video>` tag.
+For the **Audio Booster** and **Ambient Mode** to work, your video server must support CORS, and you must add `crossorigin="anonymous"` to the `<video>` tag. If this is missing, the canvas and audio context will be blocked by the browser for security reasons.
 
 ---
 
@@ -139,7 +141,7 @@ For the Audio Booster and Ambient Mode to work, your video server must support C
 
 ## Theming
 
-GokuPlr v3.0.0 uses simplified CSS variables. You can override these in your own CSS to match your branding.
+GokuPlr v3.0.2 uses simplified CSS variables. You can override these in your own CSS to match your branding.
 
 ```css
 :root {
