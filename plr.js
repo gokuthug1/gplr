@@ -1,10 +1,16 @@
+
 /**
- * GokuPlr v3.0.1 (Ultimate Edition)
+ * GokuPlr v3.0.2 (Ultimate Edition - Fixed)
  * The definitive HTML5 video player wrapper.
  * Merges high-end styling with enterprise-grade performance and accessibility.
  *
  * Features: Audio Booster, Ambient Mode, VTT Thumbnails, Advanced Caption Styling,
  *           Quality Switching, AirPlay/Cast support, and Touch Optimization.
+ * 
+ * Fixes v3.0.2:
+ * - Fixed menus not populating due to metadata race conditions.
+ * - Fixed menu overflow/clipping issues on small screens.
+ * - Improved menu navigation state handling.
  */
 
 (function() {
@@ -15,7 +21,7 @@
 
     // --- Configuration & Constants ---
     const CONFIG = {
-        VERSION: '3.0.1',
+        VERSION: '3.0.2',
         STORAGE_KEY: 'gplr-state',
         PLAYBACK_SPEEDS: [0.5, 0.75, 1, 1.25, 1.5, 2, 4],
         BOOSTER_GAIN: 2.5,
@@ -74,7 +80,8 @@
             touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
             booster: false,
             ambient: false,
-            activePanel: 'main'
+            activePanel: 'main',
+            track: -1
         };
         #modules = {
             vtt: null,
@@ -96,6 +103,9 @@
             this.#cacheDOM();
             this.#restoreState();
             this.#initEvents();
+            
+            // Fix: Trigger metadata handler if already loaded to populate menus
+            if (this.#video.readyState >= 1) this.#onMeta();
             
             // Ensure controls are visible initially if paused
             if (this.#video.paused) this.#showCtrl(true);
@@ -163,13 +173,15 @@
                 .gplr-vol-fill { height: 100%; background: #fff; border-radius: 2px; }
 
                 /* Settings Menu */
-                .gplr-menu { position: absolute; bottom: 65px; right: 12px; width: 260px; background: var(--gplr-bg); backdrop-filter: blur(12px); border-radius: 8px; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.2s; z-index: 20; border: 1px solid rgba(255,255,255,0.1); }
+                .gplr-menu { position: absolute; bottom: 65px; right: 12px; width: 260px; background: var(--gplr-bg); backdrop-filter: blur(12px); border-radius: 8px; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.2s; z-index: 20; border: 1px solid rgba(255,255,255,0.1); max-height: calc(100% - 80px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }
+                .gplr-menu::-webkit-scrollbar { width: 6px; }
+                .gplr-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
                 .gplr-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
-                .gplr-panels { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-                .gplr-panel { min-width: 100%; display: flex; flex-direction: column; }
-                .gplr-item { padding: 12px 14px; background: none; border: none; color: #eee; cursor: pointer; text-align: left; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+                .gplr-panels { display: flex; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); align-items: flex-start; }
+                .gplr-panel { min-width: 100%; width: 100%; display: flex; flex-direction: column; }
+                .gplr-item { padding: 12px 14px; background: none; border: none; color: #eee; cursor: pointer; text-align: left; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; }
                 .gplr-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
-                .gplr-head { padding: 10px; background: rgba(255,255,255,0.08); color: #fff; font-weight: 600; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+                .gplr-head { padding: 10px; background: rgba(255,255,255,0.08); color: #fff; font-weight: 600; display: flex; align-items: center; gap: 10px; font-size: 14px; width: 100%; }
                 .gplr-val { color: var(--gplr-primary); font-size: 12px; display: flex; align-items: center; gap: 5px; }
                 
                 /* Styled Inputs */
@@ -458,8 +470,8 @@
             
             // List Selection
             if (btn.dataset.spd) this.#setSpeed(parseFloat(btn.dataset.spd));
-            if (btn.dataset.trk) this.#setCaption(parseInt(btn.dataset.trk));
-            if (btn.dataset.src) this.#setQual(parseInt(btn.dataset.src));
+            if (btn.dataset.trk !== undefined) this.#setCaption(parseInt(btn.dataset.trk));
+            if (btn.dataset.src !== undefined) this.#setQual(parseInt(btn.dataset.src));
         }
 
         #onDblClick(e) {
@@ -536,6 +548,7 @@
         #setCaption(idx) {
             Array.from(this.#video.textTracks).forEach((t, i) => t.mode = (i === idx) ? 'showing' : 'hidden');
             const label = idx === -1 ? 'Off' : (this.#video.textTracks[idx].label || 'On');
+            this.#state.track = idx;
             this.#ui.menu.el.querySelector('.val-cap').textContent = label;
             this.#updateCheck('[data-id="captions"]', idx === -1 ? -1 : idx, 'trk');
             this.#nav('main');
